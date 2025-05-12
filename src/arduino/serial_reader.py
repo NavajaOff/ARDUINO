@@ -105,11 +105,16 @@ class ArduinoSerialReader:
             while True:
                 if self.serial_port.in_waiting:
                     line = self.serial_port.readline().decode('utf-8').strip()
+                    print(f"Dato recibido: {line}")  # Debug
                     
                     if line.startswith('VEHICULO_DETECTADO'):
-                        _, timestamp = line.split(',')
-                        self.guardar_registro(int(timestamp))
-                        print(f"Vehículo detectado: {timestamp}")
+                        try:
+                            _, timestamp = line.split(',')
+                            print(f"Guardando registro con timestamp: {timestamp}")  # Debug
+                            self.guardar_registro(int(timestamp))
+                            print("✅ Registro guardado correctamente")
+                        except Exception as e:
+                            print(f"❌ Error al guardar registro: {str(e)}")
                         
                 sleep(0.1)
                 
@@ -117,6 +122,7 @@ class ArduinoSerialReader:
             print("\nLectura interrumpida por el usuario")
         finally:
             self.serial_port.close()
+            print("Conexión serial cerrada")
 
 if __name__ == '__main__':
     reader = ArduinoSerialReader()

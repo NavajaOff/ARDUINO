@@ -9,7 +9,7 @@ def test_mysql_connection():
             host="localhost",
             user="root",
             password="",
-            database="peaje_arduino"
+            database="arduino_peaje"
         )
         if connection.is_connected():
             return "Conexión a MySQL exitosa!"

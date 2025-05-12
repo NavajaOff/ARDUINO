@@ -11,13 +11,12 @@ VELOCIDAD = 9600
 
 # Configuración de la conexión MySQL
 config_mysql = {
-    'user': 'usuario',
-    'password': 'contraseña',
+    'user': 'root',
+    'password': '',
     'host': 'localhost',
-    'database': 'peaje_arduino',
+    'database': 'arduino_peaje',
     'raise_on_warnings': True
 }
-
 # Clase simple para implementar blockchain
 class Bloque:
     def __init__(self, indice, timestamp, datos, hash_anterior):
