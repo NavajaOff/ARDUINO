@@ -1,5 +1,7 @@
-from flask import jsonify, request
+from flask import Flask, jsonify, render_template, request
 from src.Model.arduino_model import ArduinoModel
+
+app = Flask(__name__)
 
 class ArduinoController:
     def __init__(self, model: ArduinoModel):
@@ -35,3 +37,8 @@ class ArduinoController:
             if 'conn' in locals():
                 cursor.close()
                 conn.close()
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+

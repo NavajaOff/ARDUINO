@@ -4,14 +4,17 @@
             "name": "Arduino",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:\\Program Files (x86)\\Arduino\\tools\\**",
-                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**",
-                "C:\\Program Files (x86)\\Arduino\\libraries\\**"
+                "C:\\Users\\Navaja\\AppData\\Local\\Programs\\Arduino IDE\\**"
             ],
-            "forcedInclude": [
-                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
+            "defines": [
+                "ARDUINO=10805",
+                "ARDUINO_ARCH_AVR",
+                "F_CPU=16000000L",
+                "ARDUINO_AVR_UNO"
             ],
-            "intelliSenseMode": "windows-msvc-x64"
+            "intelliSenseMode": "windows-msvc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++11"
         }
     ],
     "version": 4

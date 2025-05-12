@@ -3,7 +3,9 @@ from src.Controller.arduino_controller import ArduinoController
 from src.Model.arduino_model import ArduinoModel
 from src.config.conexion import config_mysql
 
-app = Flask(__name__)
+app = Flask(__name__, 
+           template_folder='src/View/Templates',
+           static_folder='src/View/Static')
 
 # Inicialización del modelo y controlador
 arduino_model = ArduinoModel(config_mysql)
