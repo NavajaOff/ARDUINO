@@ -117,3 +117,80 @@ class ArduinoModel:
     def calcular_hash_bloque(bloque):
         bloque_string = str(bloque['indice']) + str(bloque['timestamp']) + str(bloque['datos']) + str(bloque['hash_anterior']) + str(bloque['nonce'])
         return hashlib.sha256(bloque_string.encode()).hexdigest()
+
+    def get_estadisticas_diarias(self):
+        conn = self.get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute("""
+                SELECT 
+                    DATE(fecha_hora) as fecha,
+                    COUNT(*) as total
+                FROM registros_peaje
+                WHERE fecha_hora >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                GROUP BY DATE(fecha_hora)
+                ORDER BY fecha DESC
+            """)
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_ultimos_bloques(self, pagina=1, por_pagina=10):
+        conn = self.get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # Obtener total de bloques
+            cursor.execute("SELECT COUNT(*) as total FROM blockchain")
+            total = cursor.fetchone()['total']
+            
+            # Calcular offset
+            offset = (pagina - 1) * por_pagina
+            
+            # Obtener bloques para la página actual
+            cursor.execute("""
+                SELECT * FROM blockchain 
+                ORDER BY indice DESC 
+                LIMIT %s OFFSET %s
+            """, (por_pagina, offset))
+            
+            bloques = cursor.fetchall()
+            
+            return {
+                'bloques': bloques,
+                'total_paginas': (total + por_pagina - 1) // por_pagina,
+                'pagina_actual': pagina
+            }
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_bloque_detalle(self, indice):
+        conn = self.get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # Obtener bloque
+            cursor.execute("SELECT * FROM blockchain WHERE indice = %s", (indice,))
+            bloque = cursor.fetchone()
+            
+            if bloque:
+                # Obtener registros asociados al bloque
+                datos = json.loads(bloque['datos'])
+                ids_registros = [reg['id'] for reg in datos['registros']]
+                
+                if ids_registros:
+                    cursor.execute("""
+                        SELECT id, fecha_hora, hash 
+                        FROM registros_peaje 
+                        WHERE id IN ({})
+                    """.format(','.join(['%s'] * len(ids_registros))), 
+                    tuple(ids_registros))
+                    
+                    registros = cursor.fetchall()
+                    bloque['registros'] = registros
+                
+                return bloque
+            return None
+        finally:
+            cursor.close()
+            conn.close()

@@ -32,6 +32,31 @@ def init_database():
         else:
             print("ℹ️ La tabla distancias ya existe")
 
+        # Crear tabla registros_peaje
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS registros_peaje (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            fecha_hora DATETIME,
+            estado VARCHAR(50),
+            hash VARCHAR(64)
+        )
+        ''')
+        
+        # Crear tabla blockchain
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS blockchain (
+            indice INT PRIMARY KEY,
+            timestamp DATETIME,
+            datos TEXT,
+            hash VARCHAR(64),
+            hash_anterior VARCHAR(64),
+            nonce INT
+        )
+        ''')
+        
+        conn.commit()
+        print("✅ Tablas creadas correctamente")
+
         # Mostrar estructura de la tabla
         print("\n📋 Estructura de la tabla distancias:")
         cursor.execute("DESCRIBE distancias")

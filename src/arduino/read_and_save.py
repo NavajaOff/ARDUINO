@@ -20,25 +20,30 @@ def calcular_hash(datos):
 
 def guardar_distancia(cursor, distancia):
     try:
-        # Crear datos del registro
-        datos = {
-            'fecha_hora': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'distancia': distancia
-        }
-        
-        # Calcular hash del registro
-        hash_registro = calcular_hash(datos)
+        # Solo guardar si se detecta un vehículo (distancia < 25cm)
+        if distancia < 25:
+            datos = {
+                'fecha_hora': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'estado': "VEHICULO DETECTADO",
+                'distancia': distancia
+            }
+            
+            # Calcular hash del registro
+            hash_registro = calcular_hash(datos)
 
-        # Insertar en la tabla distancias
-        sql = """INSERT INTO distancias (fecha_hora, distancia, hash) 
-                VALUES (%s, %s, %s)"""
-        cursor.execute(sql, (datos['fecha_hora'], distancia, hash_registro))
-        
-        print(f"✅ Distancia guardada: {distancia} cm")
-        return True
+            # Insertar en la tabla registros_peaje
+            sql = """INSERT INTO registros_peaje (fecha_hora, estado, hash) 
+                    VALUES (%s, %s, %s)"""
+            cursor.execute(sql, (datos['fecha_hora'], datos['estado'], hash_registro))
+            
+            print(f"✅ Vehículo detectado y registrado - Distancia: {distancia} cm")
+            return True
+        else:
+            print(f"ℹ️ No se detectó vehículo - Distancia: {distancia} cm")
+            return False
 
     except Exception as e:
-        print(f"❌ Error al guardar distancia: {str(e)}")
+        print(f"❌ Error al guardar registro: {str(e)}")
         return False
 
 def read_and_save():
@@ -66,7 +71,6 @@ def read_and_save():
             if arduino.in_waiting:
                 try:
                     line = arduino.readline().decode('utf-8').strip()
-                    print(f"📡 Dato recibido: {line}")
                     
                     if line.startswith('Distance:'):
                         distancia = float(line.split(':')[1].split('cm')[0].strip())
