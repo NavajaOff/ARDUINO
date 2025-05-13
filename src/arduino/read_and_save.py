@@ -22,19 +22,34 @@ def guardar_distancia(cursor, distancia):
     try:
         # Solo guardar si se detecta un vehículo (distancia < 25cm)
         if distancia < 25:
-            datos = {
-                'fecha_hora': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            fecha_hora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Datos para registros_peaje
+            datos_peaje = {
+                'fecha_hora': fecha_hora,
                 'estado': "VEHICULO DETECTADO",
                 'distancia': distancia
             }
             
             # Calcular hash del registro
-            hash_registro = calcular_hash(datos)
+            hash_registro = calcular_hash(datos_peaje)
 
-            # Insertar en la tabla registros_peaje
-            sql = """INSERT INTO registros_peaje (fecha_hora, estado, hash) 
+            # 1. Insertar en la tabla registros_peaje
+            sql_peaje = """INSERT INTO registros_peaje (fecha_hora, estado, hash) 
                     VALUES (%s, %s, %s)"""
-            cursor.execute(sql, (datos['fecha_hora'], datos['estado'], hash_registro))
+            cursor.execute(sql_peaje, (fecha_hora, datos_peaje['estado'], hash_registro))
+            
+            # 2. Insertar en la tabla distancias
+            sql_distancias = """INSERT INTO distancias (fecha_hora, distancia, hash) 
+                    VALUES (%s, %s, %s)"""
+            cursor.execute(sql_distancias, (fecha_hora, distancia, hash_registro))
+            
+            # 3. Crear bloque cada 5 registros
+            cursor.execute("SELECT COUNT(*) FROM registros_peaje WHERE bloque_id IS NULL")
+            registros_sin_bloque = cursor.fetchone()[0]
+            
+            if registros_sin_bloque >= 5:
+                crear_nuevo_bloque(cursor)
             
             print(f"✅ Vehículo detectado y registrado - Distancia: {distancia} cm")
             return True
@@ -45,6 +60,74 @@ def guardar_distancia(cursor, distancia):
     except Exception as e:
         print(f"❌ Error al guardar registro: {str(e)}")
         return False
+
+def crear_nuevo_bloque(cursor):
+    try:
+        # Obtener registros sin bloque
+        cursor.execute("""
+            SELECT id, fecha_hora, estado, hash 
+            FROM registros_peaje 
+            WHERE bloque_id IS NULL 
+            ORDER BY id
+            LIMIT 5
+        """)
+        registros = cursor.fetchall()
+        
+        # Obtener último bloque
+        cursor.execute("SELECT * FROM blockchain ORDER BY indice DESC LIMIT 1")
+        ultimo_bloque = cursor.fetchone()
+        
+        # Preparar datos del nuevo bloque
+        indice = 1 if not ultimo_bloque else ultimo_bloque[0] + 1
+        timestamp = datetime.now().timestamp()
+        datos = {
+            'registros': [
+                {
+                    'id': reg[0],
+                    'fecha_hora': reg[1].strftime('%Y-%m-%d %H:%M:%S'),
+                    'estado': reg[2],
+                    'hash': reg[3]
+                } for reg in registros
+            ]
+        }
+        hash_anterior = '0' * 64 if not ultimo_bloque else ultimo_bloque[4]
+        
+        # Encontrar nonce válido
+        nonce = 0
+        while True:
+            bloque = {
+                'indice': indice,
+                'timestamp': timestamp,
+                'datos': json.dumps(datos),
+                'hash_anterior': hash_anterior,
+                'nonce': nonce
+            }
+            hash_bloque = hashlib.sha256(str(bloque).encode()).hexdigest()
+            if hash_bloque.startswith('00'):  # Dificultad básica
+                break
+            nonce += 1
+        
+        # Insertar nuevo bloque
+        sql = """INSERT INTO blockchain 
+                (indice, timestamp, datos, hash_anterior, hash, nonce) 
+                VALUES (%s, %s, %s, %s, %s, %s)"""
+        cursor.execute(sql, (indice, timestamp, json.dumps(datos), 
+                           hash_anterior, hash_bloque, nonce))
+        
+        # Actualizar registros con el ID del bloque
+        ids_registros = [reg[0] for reg in registros]
+        cursor.execute("""
+            UPDATE registros_peaje 
+            SET bloque_id = %s 
+            WHERE id IN ({})
+        """.format(','.join(['%s'] * len(ids_registros))), 
+        [indice] + ids_registros)
+        
+        print(f"✅ Nuevo bloque creado: {indice}")
+        
+    except Exception as e:
+        print(f"❌ Error al crear bloque: {str(e)}")
+        raise e
 
 def read_and_save():
     # Listar puertos disponibles

@@ -4,7 +4,7 @@
             "name": "Arduino",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:\\Users\\Usuario\\AppData\\Local\\Programs\\Arduino IDE\\**"
+                "C:\\Users\\juan david\\AppData\\Local\\Programs\\Arduino IDE\\**"
             ],
             "defines": [
                 "ARDUINO=10805",
