@@ -12,7 +12,25 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- estilos CSS -->
-    <link href="../../css/estilos.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/estilos.css') }}" rel="stylesheet">
+
+    <!-- Inicialización de datos desde Flask -->
+    <script>
+        // Datos iniciales del servidor
+        const initialData = {
+            stats: {{ stats|tojson|safe if stats else 'null' }},
+            trafico: {{ trafico_por_hora|tojson|safe if trafico_por_hora else '[]' }},
+            estadisticas: {{ estadisticas_diarias|tojson|safe if estadisticas_diarias else '[]' }},
+            bloques: {{ ultimos_bloques|tojson|safe if ultimos_bloques else '{"bloques":[],"total_paginas":0,"pagina_actual":1}' }}
+        };
+
+        // Mensaje de error si existe
+        {% if error %}
+            window.addEventListener('DOMContentLoaded', () => {
+                showAlert('{{ error }}', 'danger');
+            });
+        {% endif %}
+    </script>
 </head>
 
 <body>
@@ -62,7 +80,9 @@
                             <i class="fas fa-car"></i>
                         </div>
                         <div>
-                            <h5 class="stat-value" id="totalRegistros">--</h5>
+                            <h5 class="stat-value" id="totalRegistros">
+                                {{ stats.total_registros if stats else '--' }}
+                            </h5>
                             <div class="stat-title">Total Registros</div>
                         </div>
                     </div>
@@ -113,6 +133,7 @@
         </div>
 
         <!-- Último Registro -->
+        {% if stats and stats.ultimo_registro %}
         <div class="row mt-4">
             <div class="col-md-12">
                 <div class="card">
@@ -123,13 +144,16 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-3">
-                                <strong>ID:</strong> <span id="ultimoRegistroId">--</span>
+                                <strong>ID:</strong> 
+                                <span id="ultimoRegistroId">{{ stats.ultimo_registro.id }}</span>
                             </div>
                             <div class="col-md-3">
-                                <strong>Fecha/Hora:</strong> <span id="ultimoRegistroFecha">--</span>
+                                <strong>Fecha/Hora:</strong> 
+                                <span id="ultimoRegistroFecha">{{ stats.ultimo_registro.fecha_hora }}</span>
                             </div>
                             <div class="col-md-6">
-                                <strong>Hash:</strong> <span id="ultimoRegistroHash" class="hash-text">--</span>
+                                <strong>Hash:</strong> 
+                                <span id="ultimoRegistroHash" class="hash-text">{{ stats.ultimo_registro.hash }}</span>
                                 <button class="btn btn-sm btn-outline-secondary ms-2" id="copyLastHash">
                                     <i class="fas fa-copy"></i>
                                 </button>
@@ -139,6 +163,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <div class="row mt-4">
             <!-- Traffic Chart -->
@@ -295,7 +320,7 @@
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <!-- App JS -->
-    <script src="../../js/main.js"></script>
+     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 
 </html>

@@ -1,6 +1,7 @@
 // Variables globales
 let trafficChart;
 let currentBlockPage = 1;
+let tiempoRealInterval = null;
 
 // Mostrar fecha y hora actuales
 function updateClock() {
@@ -14,27 +15,7 @@ async function loadStats() {
         const response = await fetch('/api/stats');
         const data = await response.json();
 
-        // Actualizar estadísticas
-        document.getElementById('totalRegistros').textContent = data.total_registros;
-        document.getElementById('totalBloques').textContent = data.total_bloques;
-        document.getElementById('registros24h').textContent = data.registros_24h;
-
-        // Mostrar estado de integridad
-        const integridadStatus = document.getElementById('integridadStatus');
-        if (data.integridad) {
-            integridadStatus.textContent = 'Verificada';
-            integridadStatus.classList.add('text-success');
-        } else {
-            integridadStatus.textContent = 'Comprometida';
-            integridadStatus.classList.add('text-danger');
-        }
-
-        // Actualizar último registro
-        if (data.ultimo_registro) {
-            document.getElementById('ultimoRegistroId').textContent = data.ultimo_registro.id;
-            document.getElementById('ultimoRegistroFecha').textContent = new Date(data.ultimo_registro.fecha_hora).toLocaleString();
-            document.getElementById('ultimoRegistroHash').textContent = data.ultimo_registro.hash_bloque;
-        }
+        updateStats(data);
     } catch (error) {
         console.error('Error al cargar estadísticas:', error);
         showAlert('Error al cargar estadísticas. Intente nuevamente.', 'danger');
@@ -47,52 +28,7 @@ async function loadTrafficData() {
         const response = await fetch('/api/trafico_por_hora');
         const data = await response.json();
 
-        // Preparar datos para gráfico
-        const labels = data.map(item => `${item.hora}:00`);
-        const values = data.map(item => item.cantidad);
-
-        // Crear gráfico
-        const ctx = document.getElementById('trafficChart').getContext('2d');
-        if (trafficChart) {
-            trafficChart.destroy();
-        }
-
-        trafficChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Vehículos',
-                    data: values,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointBackgroundColor: 'rgba(54, 162, 235, 1)'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
-        });
+        updateTrafficChart(data);
     } catch (error) {
         console.error('Error al cargar datos de tráfico:', error);
         showAlert('Error al cargar datos de tráfico. Intente nuevamente.', 'danger');
@@ -105,27 +41,7 @@ async function loadDailyStats() {
         const response = await fetch('/api/estadisticas_diarias');
         const data = await response.json();
 
-        const tbody = document.getElementById('estadisticasDiarias');
-        tbody.innerHTML = '';
-
-        if (data.length === 0) {
-            const row = document.createElement('tr');
-            row.innerHTML = '<td colspan="2" class="text-center">No hay datos disponibles</td>';
-            tbody.appendChild(row);
-            return;
-        }
-
-        // Crear filas con datos
-        data.forEach(item => {
-            const row = document.createElement('tr');
-            const date = new Date(item.fecha).toLocaleDateString();
-
-            row.innerHTML = `
-                        <td>${date}</td>
-                        <td>${item.cantidad}</td>
-                    `;
-            tbody.appendChild(row);
-        });
+        updateDailyStats(data);
     } catch (error) {
         console.error('Error al cargar estadísticas diarias:', error);
         showAlert('Error al cargar estadísticas diarias. Intente nuevamente.', 'danger');
@@ -139,45 +55,7 @@ async function loadBlocks(page = 1) {
         const response = await fetch(`/api/bloques?page=${page}&limit=10`);
         const data = await response.json();
 
-        const tbody = document.getElementById('bloquesTable');
-        tbody.innerHTML = '';
-
-        if (data.bloques.length === 0) {
-            const row = document.createElement('tr');
-            row.innerHTML = '<td colspan="6" class="text-center">No hay bloques disponibles</td>';
-            tbody.appendChild(row);
-            return;
-        }
-
-        // Crear filas con datos de bloques
-        data.bloques.forEach(bloque => {
-            const row = document.createElement('tr');
-
-            row.innerHTML = `
-                        <td>${bloque.indice}</td>
-                        <td>${bloque.fecha}</td>
-                        <td><span class="hash-text">${bloque.hash}</span></td>
-                        <td><span class="hash-text">${bloque.hash_anterior}</span></td>
-                        <td>${bloque.nonce}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary view-block" data-indice="${bloque.indice}">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </td>
-                    `;
-            tbody.appendChild(row);
-        });
-
-        // Configurar paginación
-        setupPagination(data.page, data.pages);
-
-        // Asignar eventos a botones de ver detalles
-        document.querySelectorAll('.view-block').forEach(button => {
-            button.addEventListener('click', () => {
-                const indice = button.getAttribute('data-indice');
-                showBlockDetails(indice);
-            });
-        });
+        updateBlocksTable(data);
     } catch (error) {
         console.error('Error al cargar bloques:', error);
         showAlert('Error al cargar bloques. Intente nuevamente.', 'danger');
@@ -364,53 +242,192 @@ function showAlert(message, type) {
     }, 5000);
 }
 
+// Función para actualizar datos en tiempo real
+async function actualizarDatosTiempoReal() {
+    try {
+        const response = await fetch('/api/datos_tiempo_real');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Error:', data.error);
+            return;
+        }
+
+        // Actualizar último registro en la interfaz
+        document.getElementById('ultimoRegistroId').textContent = data.id;
+        document.getElementById('ultimoRegistroFecha').textContent = new Date(data.fecha_hora).toLocaleString();
+        document.getElementById('ultimoRegistroHash').textContent = data.hash;
+        
+        // Actualizar contador de registros
+        const totalRegistros = document.getElementById('totalRegistros');
+        if (totalRegistros) {
+            totalRegistros.textContent = parseInt(totalRegistros.textContent) + 1;
+        }
+
+        // Si hay un vehículo detectado, mostrar alerta
+        if (data.estado === "VEHICULO DETECTADO") {
+            showAlert(`¡Vehículo detectado! Distancia: ${data.distancia}cm`, 'success');
+        }
+
+    } catch (error) {
+        console.error('Error al actualizar datos en tiempo real:', error);
+        // Detener el intervalo si hay un error de conexión
+        if (error.message.includes('Failed to fetch')) {
+            if (tiempoRealInterval) {
+                clearInterval(tiempoRealInterval);
+                tiempoRealInterval = null;
+                showAlert('Conexión perdida con el servidor. Recargue la página cuando el servidor esté disponible.', 'danger');
+            }
+        }
+    }
+}
+
 // Inicializar aplicación
 document.addEventListener('DOMContentLoaded', async () => {
-    // Configurar reloj
+    // Inicializar con datos del servidor
+    if (initialData.stats) {
+        updateStats(initialData.stats);
+    }
+    if (initialData.trafico) {
+        updateTrafficChart(initialData.trafico);
+    }
+    if (initialData.estadisticas) {
+        updateDailyStats(initialData.estadisticas);
+    }
+    if (initialData.bloques) {
+        updateBlocksTable(initialData.bloques);
+    }
+
+    // Actualizar reloj
     updateClock();
     setInterval(updateClock, 1000);
 
+    // Actualizar datos cada 5 segundos
+    setInterval(loadAllData, 5000);
+
+    // Iniciar intervalo solo si no está ya corriendo
+    if (!tiempoRealInterval) {
+        tiempoRealInterval = setInterval(actualizarDatosTiempoReal, 1000);
+    }
+
+    // Limpiar intervalo cuando la página se cierra o recarga
+    window.addEventListener('beforeunload', () => {
+        if (tiempoRealInterval) {
+            clearInterval(tiempoRealInterval);
+        }
+    });
+});
+
+function updateStats(stats) {
+    document.getElementById('totalRegistros').textContent = stats.total_registros;
+    document.getElementById('totalBloques').textContent = stats.total_bloques;
+    document.getElementById('registros24h').textContent = stats.registros_24h;
+    document.getElementById('integridadStatus').textContent = stats.integridad ? 'Verificado' : 'Error';
+    document.getElementById('integridadStatus').className = 'stat-value ' + (stats.integridad ? 'text-success' : 'text-danger');
+
+    if (stats.ultimo_registro) {
+        document.getElementById('ultimoRegistroId').textContent = stats.ultimo_registro.id;
+        document.getElementById('ultimoRegistroFecha').textContent = new Date(stats.ultimo_registro.fecha_hora).toLocaleString();
+        document.getElementById('ultimoRegistroHash').textContent = stats.ultimo_registro.hash;
+    }
+}
+
+function updateTrafficChart(data) {
+    const ctx = document.getElementById('trafficChart').getContext('2d');
+    
+    // Destruir el gráfico anterior si existe
+    if (window.trafficChart instanceof Chart) {
+        window.trafficChart.destroy();
+    }
+
+    // Crear nuevo gráfico
+    window.trafficChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => `${d.hora}:00`),
+            datasets: [{
+                label: 'Vehículos detectados',
+                data: data.map(d => d.cantidad),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateDailyStats(data) {
+    const tbody = document.getElementById('estadisticasDiarias');
+    tbody.innerHTML = data.map(row => `
+        <tr>
+            <td>${new Date(row.fecha).toLocaleDateString()}</td>
+            <td>${row.total}</td>
+        </tr>
+    `).join('');
+}
+
+function updateBlocksTable(data) {
+    const tbody = document.getElementById('bloquesTable');
+    tbody.innerHTML = data.bloques.map(bloque => `
+        <tr>
+            <td>${bloque.indice}</td>
+            <td>${new Date(bloque.timestamp * 1000).toLocaleString()}</td>
+            <td class="text-truncate" style="max-width: 150px;">${bloque.hash}</td>
+            <td class="text-truncate" style="max-width: 150px;">${bloque.hash_anterior}</td>
+            <td>${bloque.nonce}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="showBlockDetails(${bloque.indice})">
+                    <i class="fas fa-info-circle"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    // Actualizar paginación
+    setupPagination(data.pagina_actual, data.total_paginas);
+}
+
+async function loadAllData() {
     try {
-        // Cargar datos iniciales
-        await Promise.all([
-            loadStats(),
-            loadTrafficData(),
-            loadDailyStats(),
-            loadBlocks()
+        const [stats, trafico, estadisticas, bloques] = await Promise.all([
+            fetch('/api/stats').then(r => {
+                if (!r.ok) throw new Error('Error en stats');
+                return r.json();
+            }),
+            fetch('/api/trafico_por_hora').then(r => {
+                if (!r.ok) throw new Error('Error en tráfico');
+                return r.json();
+            }),
+            fetch('/api/estadisticas_diarias').then(r => {
+                if (!r.ok) throw new Error('Error en estadísticas');
+                return r.json();
+            }),
+            fetch('/api/ultimos_bloques').then(r => {
+                if (!r.ok) throw new Error('Error en bloques');
+                return r.json();
+            })
         ]);
 
-        // Ocultar overlay de carga
-        document.getElementById('loadingOverlay').style.display = 'none';
-
-        // Configurar botón para verificar integridad
-        document.getElementById('verificarIntegridad').addEventListener('click', (e) => {
-            e.preventDefault();
-            checkIntegrity();
-        });
-
-        // Botón para copiar hash del último registro
-        document.getElementById('copyLastHash').addEventListener('click', () => {
-            const hash = document.getElementById('ultimoRegistroHash').textContent;
-            navigator.clipboard.writeText(hash)
-                .then(() => {
-                    alert('Hash copiado al portapapeles');
-                })
-                .catch(err => {
-                    console.error('Error al copiar hash:', err);
-                });
-        });
-
-        // Actualizar datos cada 30 segundos
-        setInterval(() => {
-            loadStats();
-            loadTrafficData();
-            loadDailyStats();
-            loadBlocks(currentBlockPage);
-        }, 30000);
-
+        updateStats(stats);
+        updateTrafficChart(trafico);
+        updateDailyStats(estadisticas);
+        updateBlocksTable(bloques);
     } catch (error) {
-        console.error('Error al inicializar la aplicación:', error);
-        document.getElementById('loadingOverlay').style.display = 'none';
-        showAlert('Error al cargar la aplicación. Intente recargar la página.', 'danger');
+        console.error('Error loading data:', error);
+        showAlert('Error de conexión con el servidor', 'danger');
     }
-});
+}

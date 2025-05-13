@@ -194,3 +194,19 @@ class ArduinoModel:
         finally:
             cursor.close()
             conn.close()
+
+    def get_ultimo_registro(self):
+        conn = self.get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute("""
+                SELECT r.*, d.distancia 
+                FROM registros_peaje r 
+                LEFT JOIN distancias d ON r.hash = d.hash 
+                ORDER BY r.id DESC 
+                LIMIT 1
+            """)
+            return cursor.fetchone()
+        finally:
+            cursor.close()
+            conn.close()
