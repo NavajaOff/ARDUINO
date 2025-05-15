@@ -6,6 +6,17 @@ export function updateStats(stats) {
     document.getElementById('totalBloques').textContent = stats.total_bloques || '--';
     document.getElementById('registros24h').textContent = stats.registros_24h || '--';
     
+    // Actualizar estado de integridad
+    const integridadElement = document.getElementById('integridadStatus');
+    if (stats.integridad !== undefined) {
+        integridadElement.textContent = stats.integridad ? 'Válida' : 'Inválida';
+        integridadElement.className = 'stat-value ' + 
+            (stats.integridad ? 'text-success' : 'text-danger');
+    } else {
+        integridadElement.textContent = 'No verificado';
+        integridadElement.className = 'stat-value text-warning';
+    }
+    
     // Actualizar último registro
     if (stats.ultimo_registro) {
         document.getElementById('ultimoRegistroId').textContent = stats.ultimo_registro.id;

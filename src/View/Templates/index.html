@@ -149,8 +149,8 @@
                         Último Registro
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
                                 <strong>ID:</strong> 
                                 <span id="ultimoRegistroId">{{ stats.ultimo_registro.id }}</span>
                             </div>
@@ -158,12 +158,13 @@
                                 <strong>Fecha/Hora:</strong> 
                                 <span id="ultimoRegistroFecha">{{ stats.ultimo_registro.fecha_hora }}</span>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <strong>Hash:</strong> 
-                                <span id="ultimoRegistroHash" class="hash-text">{{ stats.ultimo_registro.hash }}</span>
-                                <button class="btn btn-sm btn-outline-secondary ms-2" id="copyLastHash">
-                                    <i class="fas fa-copy"></i>
-                                </button>
+                                <div class="hash-container mt-1">
+                                    <code id="ultimoRegistroHash" class="hash-text p-2 bg-light rounded w-100 d-inline-block">
+                                        {{ stats.ultimo_registro.hash }}
+                                    </code>
+                                </div>
                             </div>
                         </div>
                     </div>
