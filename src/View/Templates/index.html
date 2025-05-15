@@ -16,20 +16,27 @@
 
     <!-- Inicialización de datos desde Flask -->
     <script>
-        // Datos iniciales del servidor
+        // Corregir la inicialización de datos
         const initialData = {
-            stats: {{ stats|tojson|safe if stats else 'null' }},
-            trafico: {{ trafico_por_hora|tojson|safe if trafico_por_hora else '[]' }},
-            estadisticas: {{ estadisticas_diarias|tojson|safe if estadisticas_diarias else '[]' }},
-            bloques: {{ ultimos_bloques|tojson|safe if ultimos_bloques else '{"bloques":[],"total_paginas":0,"pagina_actual":1}' }}
+            stats: {% if stats %}{{ stats|tojson|safe }}{% else %}null{% endif %},
+            trafico: {% if trafico_por_hora %}{{ trafico_por_hora|tojson|safe }}{% else %}[]{% endif %},
+            estadisticas: {% if estadisticas_diarias %}{{ estadisticas_diarias|tojson|safe }}{% else %}[]{% endif %},
+            bloques: {% if ultimos_bloques %}{{ ultimos_bloques|tojson|safe }}{% else %}{"bloques":[],"total_paginas":0,"pagina_actual":1}{% endif %},
+            error: {% if error %}{{ error|tojson|safe }}{% else %}null{% endif %}
         };
-
-        // Mensaje de error si existe
-        {% if error %}
-            window.addEventListener('DOMContentLoaded', () => {
-                showAlert('{{ error }}', 'danger');
-            });
-        {% endif %}
+    
+        // Manejo de errores e inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mostrar error si existe
+            if (initialData.error && typeof showAlert === 'function') {
+                showAlert(initialData.error, 'danger');
+            }
+    
+            // Inicializar la interfaz con los datos
+            if (typeof initializeDashboard === 'function') {
+                initializeDashboard(initialData);
+            }
+        });
     </script>
 </head>
 
@@ -320,7 +327,7 @@
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <!-- App JS -->
-     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" type="module"></script>
 </body>
 
 </html>

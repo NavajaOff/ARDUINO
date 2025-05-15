@@ -4,7 +4,7 @@
             "name": "Arduino",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:\\Users\\juan david\\AppData\\Local\\Programs\\Arduino IDE\\**"
+                "C:\\Users\\herna\\AppData\\Local\\Programs\\Arduino IDE\\**"
             ],
             "defines": [
                 "ARDUINO=10805",
@@ -15,6 +15,20 @@
             "intelliSenseMode": "windows-msvc-x64",
             "cStandard": "c11",
             "cppStandard": "c++11"
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**",
+                "C:\\Users\\${env:USERNAME}\\Documents\\Arduino\\libraries\\**"
+            ],
+            "defines": [
+                "ARDUINO=100"
+            ],
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "gcc-x64"
         }
     ],
     "version": 4

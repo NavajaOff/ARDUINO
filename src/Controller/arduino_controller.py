@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, render_template, request
 from src.Model.arduino_model import ArduinoModel
+from src.arduino.read_and_save import ArduinoConnection
 
 app = Flask(__name__)
 
 class ArduinoController:
     def __init__(self, model: ArduinoModel):
         self.model = model
-
+        self.arduino = ArduinoConnection()
+        
     def get_stats(self):
         try:
             stats = self.model.get_stats()
@@ -37,6 +39,18 @@ class ArduinoController:
             if 'conn' in locals():
                 cursor.close()
                 conn.close()
+
+    def get_datos_arduino(self):
+        self.arduino.connect()  # Intentará conectar solo si no está conectado
+        return self.arduino.read_data()
+
+    def get_datos_tiempo_real(self):
+        """Controller method for real-time data"""
+        try:
+            data = self.model.get_datos_tiempo_real()
+            return jsonify(data)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/')
 def index():

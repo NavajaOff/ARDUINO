@@ -6,13 +6,24 @@ const int trigPin = 11;  // Pin TRIG del sensor HC-SR04
 const int echoPin = 12;  // Pin ECHO del sensor HC-SR04
 const int servoPin = 13; // Pin para el servomotor
 
+// Modificar las constantes
+const unsigned long TIEMPO_MINIMO_ENTRE_DETECCIONES = 5000;  // 5 segundos mínimo entre detecciones
+const unsigned long TIEMPO_ESPERA_BARRERA = 1000;   // 1 segundo para que pase el vehículo
+const int DISTANCIA_DETECCION = 25;                // Distancia en cm para detectar vehículo
+const int LECTURAS_CONFIRMACION = 3;               // Número de lecturas consecutivas para confirmar
+
 // Variables
 Servo servo;
 long duration;
 int distance;
 unsigned long tiempoDeteccion = 0;
 bool vehiculoDetectado = false;
-const int DISTANCIA_DETECCION = 25; // Distancia en cm para detectar vehículo
+
+// Variables adicionales
+int lecturas_consecutivas = 0;
+int lecturas_salida = 0;
+unsigned long ultima_deteccion = 0;
+bool procesando_vehiculo = false;
 
 void setup() {
   Serial.begin(9600);
@@ -34,41 +45,48 @@ void loop() {
   digitalWrite(trigPin, LOW);
   
   duration = pulseIn(echoPin, HIGH);
-  distance = duration * 0.034 / 2; // Cálculo de distancia en cm
+  distance = duration * 0.034 / 2;
+  
+  unsigned long tiempo_actual = millis();
   
   // Mostrar distancia en monitor serial
   Serial.print("Distance: ");
   Serial.print(distance);
   Serial.println(" cm");
-  
-  // Detectar vehículo cuando la distancia es menor al umbral
-  if (distance <= DISTANCIA_DETECCION && !vehiculoDetectado) {
-    // Registrar tiempo de detección
-    tiempoDeteccion = millis();
-    
-    // Abrir barrera
-    servo.write(180);  // Abrir a 180 grados
-    
-    // Enviar datos por serial (para ser recogidos por el script Python)
-    Serial.print("VEHICULO_DETECTADO,");
-    Serial.println(tiempoDeteccion);
-    
-    vehiculoDetectado = true;
-    delay(500);  // Pequeña pausa para estabilidad
+
+  // Si hay un vehículo en proceso
+  if (procesando_vehiculo) {
+    if (distance > DISTANCIA_DETECCION) {
+      // Activar inmediatamente cuando no se detecta el vehículo
+      procesando_vehiculo = false;
+      vehiculoDetectado = false;
+      servo.write(90);  // Cerrar barrera inmediatamente
+      Serial.println("VEHICULO_SALIO");
+      lecturas_salida = 0;
+      lecturas_consecutivas = 0;
+    }
+    delay(100);
+    return;
   }
-  
-  // Si ya no se detecta un vehículo y la barrera está abierta
-  if (distance > DISTANCIA_DETECCION && vehiculoDetectado) {
-    // Dejamos la barrera abierta por un tiempo para que pase el vehículo
-    delay(3000);
-    servo.write(90);  // Cerrar barrera (90 grados)
-    
-    // Notificar que el vehículo pasó
-    Serial.println("VEHICULO_PASO");
-    
-    vehiculoDetectado = false;
-    delay(500);  // Pequeña pausa para estabilidad
+
+  // Detección de nuevo vehículo
+  if (distance <= DISTANCIA_DETECCION && !procesando_vehiculo) {
+    lecturas_consecutivas++;
+    if (lecturas_consecutivas >= LECTURAS_CONFIRMACION &&
+        (tiempo_actual - ultima_deteccion) >= TIEMPO_MINIMO_ENTRE_DETECCIONES) {
+        
+        procesando_vehiculo = true;
+        vehiculoDetectado = true;
+        ultima_deteccion = tiempo_actual;
+        
+        servo.write(180);  // Abrir barrera
+        Serial.print("Distance: ");
+        Serial.print(distance);
+        Serial.println(" cm");
+    }
+  } else {
+    lecturas_consecutivas = 0;
   }
-  
-  delay(100); // Pequeña pausa entre lecturas
-}
+
+  delay(100);
+} // Added missing closing brace
