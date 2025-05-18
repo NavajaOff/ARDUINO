@@ -5,6 +5,8 @@ from src.Model.arduino_model import ArduinoModel
 from src.config.conexion import config_mysql_aws
 import json
 import time
+import mysql.connector
+import hashlib
 
 app = Flask(__name__, 
             template_folder='src/View/Templates',
