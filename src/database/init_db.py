@@ -5,11 +5,11 @@ import sys
 # Añadir el directorio raíz al path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from src.config.conexion import config_mysql
+from src.config.conexion import config_mysql_aws
 
 def init_database():
     try:
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor()
         
         # Verificar si la tabla distancias existe
@@ -23,7 +23,8 @@ def init_database():
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 fecha_hora DATETIME,
                 distancia FLOAT,
-                hash VARCHAR(64)
+                hash VARCHAR(64),
+                timestamp BIGINT
             )
             ''')
             

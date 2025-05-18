@@ -3,11 +3,21 @@ import requests
 import time
 import sys
 from serial.tools import list_ports
+from src.config.conexion import config_mysql_aws  # Add this import
 
 # Configuración
 ARDUINO_PORT = 'COM3'  # Cambia esto según tu puerto Arduino
 BAUD_RATE = 9600
-SERVER_URL = 'http://18.188.169.252:5000/api/arduino-data'  # URL de tu servidor EC2
+SERVER_URL = 'http://18.188.169.252:5000/api/arduino-data'
+
+config_mysql_aws = {
+    'user': 'arduino_user',
+    'password': 'Arduino123!',
+    'host': '18.188.169.252',  # o la IP pública si es remoto
+    'database': 'arduino_peaje',
+    'raise_on_warnings': True,
+    'auth_plugin': 'mysql_native_password'
+}
 
 class ArduinoClient:
     def __init__(self, port=ARDUINO_PORT, baud_rate=BAUD_RATE, server_url=SERVER_URL):
@@ -17,6 +27,7 @@ class ArduinoClient:
         self.connection = None
         self.is_connected = False
         self.last_status = None
+        self.config = config_mysql_aws  # Use AWS config
 
     def list_available_ports(self):
         """Lista todos los puertos seriales disponibles"""
@@ -62,7 +73,16 @@ class ArduinoClient:
         if self.is_connected and self.connection:
             try:
                 if self.connection.in_waiting:
-                    return self.connection.readline().decode('utf-8').strip()
+                    line = self.connection.readline().decode('utf-8').strip()
+                    if line.startswith('Distance:'):
+                        try:
+                            # Extraer el número de la cadena "Distance: X cm"
+                            distancia = float(line.split(':')[1].split('cm')[0].strip())
+                            print(f"📡 Distancia leída: {distancia} cm")
+                            return distancia
+                        except (ValueError, IndexError) as e:
+                            print(f"⚠️ Error procesando dato: {line} - {e}")
+                    return None
             except Exception as e:
                 print(f"❌ Error leyendo datos: {e}")
                 self.disconnect()
@@ -72,20 +92,32 @@ class ArduinoClient:
     def send_to_server(self, distancia):
         """Envía los datos de distancia al servidor"""
         try:
-            payload = {"distancia": distancia}
-            response = requests.post(self.server_url, json=payload)
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            payload = {
+                "distancia": distancia,
+                "timestamp": int(time.time() * 1000)
+            }
+            
+            print(f"🔄 Enviando datos al servidor: {payload}")
+            response = requests.post(
+                self.server_url, 
+                json=payload,
+                headers=headers,
+                timeout=5
+            )
             
             if response.status_code == 200:
-                data = response.json()
-                if data.get("success"):
-                    print(f"✅ Datos enviados: {distancia} cm - {data.get('message')}")
-                    return True
-                else:
-                    print(f"ℹ️ {data.get('message')}")
-                    return True
+                print(f"✅ Respuesta del servidor: {response.json()}")
+                return True
             else:
                 print(f"❌ Error del servidor ({response.status_code}): {response.text}")
                 return False
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error de conexión: {e}")
+            return False
         except Exception as e:
             print(f"❌ Error enviando datos: {e}")
             return False
@@ -116,24 +148,22 @@ def main():
         print(f"No se encontraron puertos. Intentando con el puerto por defecto: {ARDUINO_PORT}")
         selected_port = ARDUINO_PORT
     
-    # Conectar al Arduino
-    if not client.connect(selected_port):
-        print("No se pudo conectar al Arduino. Verifique la conexión y el puerto.")
-        return
-    
-    print(f"\n🔄 Enviando datos a {SERVER_URL}")
+    print(f"\n🔄 Conectando al servidor {SERVER_URL}")
     print("Presiona Ctrl+C para detener...\n")
     
     try:
         while True:
-            line = client.read_data()
-            if line and line.startswith('Distance:'):
-                try:
-                    distancia = float(line.split(':')[1].split('cm')[0].strip())
-                    client.send_to_server(distancia)
-                except ValueError as e:
-                    print(f"❌ Error procesando dato: {e} - Línea: {line}")
-            time.sleep(0.1)
+            if not client.is_connected:
+                if not client.connect(selected_port):
+                    print("Reintentando conexión en 5 segundos...")
+                    time.sleep(5)
+                    continue
+            
+            distancia = client.read_data()
+            if distancia is not None:
+                client.send_to_server(distancia)
+            
+            time.sleep(0.1)  # Pequeña pausa para no saturar
             
     except KeyboardInterrupt:
         print("\n⚠️ Programa detenido por el usuario")

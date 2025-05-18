@@ -1,8 +1,8 @@
-from flask import Flask, render_template, jsonify, make_response, Response, stream_with_context
+from flask import Flask, render_template, jsonify, make_response, Response, stream_with_context, request
 from datetime import datetime
 from src.Controller.arduino_controller import ArduinoController
 from src.Model.arduino_model import ArduinoModel
-from src.config.conexion import config_mysql
+from src.config.conexion import config_mysql_aws
 import json
 import time
 
@@ -12,7 +12,7 @@ app = Flask(__name__,
 
 
 # Inicialización del modelo y controlador
-arduino_model = ArduinoModel(config_mysql)
+arduino_model = ArduinoModel(config_mysql_aws)
 arduino_controller = ArduinoController(arduino_model)
 
 
@@ -60,6 +60,33 @@ def get_ultimos_bloques():
 def datos_tiempo_real():
     """Get real-time data endpoint"""
     return arduino_controller.get_datos_tiempo_real()
+
+@app.route('/api/arduino-data', methods=['POST'])
+def arduino_data():
+    if not request.is_json:
+        return jsonify({"error": "Content type must be application/json"}), 400
+    
+    data = request.json
+    if 'distancia' not in data:
+        return jsonify({"error": "Missing distancia field"}), 400
+    
+    try:
+        distancia = float(data['distancia'])
+        # Guardar datos en la base de datos
+        timestamp = int(time.time() * 1000)
+        arduino_model.save_reading(timestamp, distancia)
+        
+        return jsonify({
+            "success": True, 
+            "message": "Data received and stored",
+            "data": {
+                "distancia": distancia,
+                "timestamp": timestamp
+            }
+        })
+    except Exception as e:
+        print(f"Error processing Arduino data: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/events')
 def events():

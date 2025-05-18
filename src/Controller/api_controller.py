@@ -3,55 +3,80 @@
 
 from flask import Blueprint, request, jsonify
 import mysql.connector
-from src.config.conexion import config_mysql
+from src.config.conexion import config_mysql_aws
 from src.arduino.read_and_save import guardar_distancia, calcular_hash
 from datetime import datetime
+import time
 
 api_arduino = Blueprint('api_arduino', __name__)
 
 @api_arduino.route('/api/arduino-data', methods=['POST'])
 def receive_arduino_data():
-    """
-    Endpoint que recibe datos del Arduino desde un cliente remoto
-    Espera un JSON con el formato: {"distancia": valor_float}
-    """
     if not request.is_json:
         return jsonify({"error": "El contenido debe ser JSON"}), 400
     
     data = request.json
     
-    if 'distancia' not in data:
-        return jsonify({"error": "El campo 'distancia' es requerido"}), 400
-    
     try:
-        distancia = float(data['distancia'])
-        
-        # Conectar a la base de datos
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor()
         
-        # Procesar los datos recibidos usando la función existente
-        # Accedemos a la aplicación Flask actual
-        from flask import current_app
-        result = guardar_distancia(cursor, distancia, current_app._get_current_object())
+        distancia = float(data['distancia'])
+        timestamp = data.get('timestamp', int(time.time() * 1000))
+        fecha_hora = datetime.fromtimestamp(timestamp/1000)
         
-        if result:
-            conn.commit()
-            response = {"success": True, "message": "Datos procesados correctamente"}
-        else:
-            response = {"success": True, "message": "Datos recibidos pero no generaron un nuevo registro"}
-            
+        # Insert data
+        sql = """INSERT INTO distancias (fecha_hora, distancia, hash, timestamp) 
+                VALUES (%s, %s, %s, %s)"""
+        datos = (fecha_hora, distancia, calcular_hash(data), timestamp)
+        cursor.execute(sql, datos)
+        conn.commit()
+        
+        return jsonify({"success": True})
+        
     except Exception as e:
-        response = {"error": str(e)}
+        return jsonify({"error": str(e)}), 500
     finally:
         if 'cursor' in locals():
             cursor.close()
         if 'conn' in locals() and conn.is_connected():
             conn.close()
-    
-    return jsonify(response)
 
 # Función para registrar las rutas del API
 def register_api_routes(app):
     app.register_blueprint(api_arduino)
     print("✅ API Arduino registrada correctamente")
+
+def init_database():
+    try:
+        conn = mysql.connector.connect(**config_mysql_aws)
+        cursor = conn.cursor()
+        
+        # Add timestamp column to distancias table if it doesn't exist
+        cursor.execute("""
+        SELECT COUNT(*) 
+        FROM information_schema.columns 
+        WHERE table_name = 'distancias' 
+        AND column_name = 'timestamp'
+        """)
+        
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+            ALTER TABLE distancias 
+            ADD COLUMN timestamp BIGINT AFTER hash
+            """)
+            print("✅ Column 'timestamp' added to table 'distancias'")
+        
+        conn.commit()
+        print("✅ Database updated successfully")
+            
+    except mysql.connector.Error as err:
+        print(f"❌ Database error: {err}")
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            cursor.close()
+            conn.close()
+            print("Connection closed")
+
+if __name__ == "__main__":
+    init_database()

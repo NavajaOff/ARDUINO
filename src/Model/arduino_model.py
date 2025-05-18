@@ -305,3 +305,30 @@ class ArduinoModel:
         except mysql.connector.Error as err:
             print(f"Database error: {err}")
             raise Exception(f"Error de base de datos: {err}")
+
+    def save_reading(self, timestamp, distancia):
+        """Saves a new reading in the database"""
+        try:
+            conn = mysql.connector.connect(**self.config)
+            cursor = conn.cursor()
+            
+            fecha_hora = datetime.fromtimestamp(timestamp/1000)
+            
+            query = """
+                INSERT INTO registros_peaje 
+                (timestamp, fecha_hora, distancia) 
+                VALUES (%s, %s, %s)
+            """
+            cursor.execute(query, (timestamp, fecha_hora, distancia))
+            conn.commit()
+            print(f"✅ Reading saved successfully: {distancia}cm at {fecha_hora}")
+            return True
+            
+        except mysql.connector.Error as err:
+            print(f"❌ Database error: {err}")
+            raise Exception(f"Database error: {err}")
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals() and conn.is_connected():
+                conn.close()

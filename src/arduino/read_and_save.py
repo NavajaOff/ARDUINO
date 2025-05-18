@@ -1,4 +1,4 @@
-from src.config.conexion import config_mysql
+from src.config.conexion import config_mysql_aws
 import serial
 import time
 from serial.tools import list_ports
@@ -9,6 +9,7 @@ from datetime import datetime
 from flask import current_app
 import sys
 import os
+from src.Controller.arduino_client import ArduinoClient
 
 # Agregar el directorio raíz al path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -215,7 +216,7 @@ def obtener_estadisticas():
     """
     try:
         # Usar la configuración MySQL directamente
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor()
             
         # Obtener total de registros
@@ -277,7 +278,7 @@ def obtener_trafico_por_hora():
         list: Lista de diccionarios con 'hora' y 'cantidad'
     """
     try:
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor()
         
         cursor.execute("""
@@ -303,7 +304,7 @@ def obtener_trafico_por_hora():
 
 def obtener_estadisticas_diarias():
     try:
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor()
         
         cursor.execute("""
@@ -329,7 +330,7 @@ def obtener_estadisticas_diarias():
 
 def obtener_ultimos_bloques(page=1, limit=10):
     try:
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor(dictionary=True)
         
         # Obtener total de bloques
@@ -364,52 +365,24 @@ def obtener_ultimos_bloques(page=1, limit=10):
         if 'conn' in locals() and conn.is_connected():
             conn.close()
 
-def read_and_save():
-    try:
-        from app import app  # Importar Flask app después de ajustar el path
-    except ImportError as e:
-        print(f"❌ Error importando la aplicación Flask: {e}")
-        return
+def connect_to_aws():
+    # Create client instance
+    client = ArduinoClient()
     
-    # Listar puertos disponibles
-    print("Puertos seriales disponibles:")
-    ports = list_ports.comports()
-    for port in ports:
-        print(f"- {port.device}: {port.description}")
-    
-    try:
-        # Conectar a la base de datos
-        conn = mysql.connector.connect(**config_mysql)
-        cursor = conn.cursor()
-        print("✅ Conexión a la base de datos establecida")
-
-        # Conectar al Arduino
-        arduino = ArduinoConnection()
-        if arduino.connect():
-            print("📊 Leyendo y guardando datos (presiona Ctrl+C para detener)...")
-        
-        while arduino.is_connected:
-            try:
-                line = arduino.read_data()
-                if line and line.startswith('Distance:'):
-                    distancia = float(line.split(':')[1].split('cm')[0].strip())
-                    if guardar_distancia(cursor, distancia, app):  # Pass app here
-                        conn.commit()
-                time.sleep(0.1)  # Reducir el delay a 0.1 segundos
-            except Exception as e:
-                print(f"❌ Error al procesar línea: {str(e)}")
-                
-    except KeyboardInterrupt:
-        print("\n⚠️ Lectura interrumpida por el usuario")
-    except mysql.connector.Error as e:
-        print(f"\n❌ Error de base de datos: {e}")
-    finally:
-        print("\nCerrando conexiones...")
-        arduino.disconnect()
-        if 'conn' in locals():
-            cursor.close()
-            conn.close()
-            print("✅ Conexión a base de datos cerrada")
+    # Connect to Arduino
+    if client.connect():
+        try:
+            while True:
+                # Read distance data
+                distancia = client.read_data()
+                if distancia is not None:
+                    # Send to AWS server
+                    client.send_to_server(distancia)
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            print("\n⚠️ Stopping connection")
+        finally:
+            client.disconnect()
 
 if __name__ == "__main__":
-    read_and_save()
+    connect_to_aws()
