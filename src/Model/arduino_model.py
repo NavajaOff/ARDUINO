@@ -6,6 +6,7 @@ import json
 class ArduinoModel:
     def __init__(self, config):
         self.config = config
+        self.vehiculo_en_proceso = False
 
     def get_db_connection(self):
         return mysql.connector.connect(**self.config)
@@ -307,84 +308,100 @@ class ArduinoModel:
             raise Exception(f"Error de base de datos: {err}")
 
     def save_reading(self, timestamp, distancia):
-        """Saves a new reading in distancias, registros_peaje, and blockchain if needed"""
+        """
+        Guarda un registro solo cuando la distancia baja de 25cm (vehículo detectado)
+        y no hay un vehículo en proceso. Cuando la distancia sube de 25cm, resetea el estado.
+        """
         try:
-            conn = mysql.connector.connect(**self.config)
-            cursor = conn.cursor()
+            if distancia < 25:
+                if not self.vehiculo_en_proceso:
+                    # Solo registrar si NO hay un vehículo en proceso
+                    conn = mysql.connector.connect(**self.config)
+                    cursor = conn.cursor()
 
-            fecha_hora = datetime.fromtimestamp(timestamp/1000)
-            estado = "VEHICULO DETECTADO"
-            # Datos para hash
-            datos_peaje = {
-                'fecha_hora': fecha_hora.strftime('%Y-%m-%d %H:%M:%S'),
-                'estado': estado,
-                'distancia': distancia
-            }
-            hash_registro = hashlib.sha256(json.dumps(datos_peaje).encode()).hexdigest()
-
-            # Insertar en distancias
-            cursor.execute(
-                "INSERT INTO distancias (fecha_hora, distancia, hash, timestamp) VALUES (%s, %s, %s, %s)",
-                (fecha_hora, distancia, hash_registro, timestamp)
-            )
-
-            # Insertar en registros_peaje
-            cursor.execute(
-                "INSERT INTO registros_peaje (fecha_hora, estado, hash) VALUES (%s, %s, %s)",
-                (fecha_hora, estado, hash_registro)
-            )
-
-            # Verificar si se debe crear un nuevo bloque
-            cursor.execute("SELECT id, fecha_hora, estado, hash FROM registros_peaje WHERE bloque_id IS NULL ORDER BY id LIMIT 5")
-            registros_sin_bloque = cursor.fetchall()
-
-            if len(registros_sin_bloque) == 5:
-                # Obtener último bloque
-                cursor.execute("SELECT * FROM blockchain ORDER BY indice DESC LIMIT 1")
-                ultimo_bloque = cursor.fetchone()
-                indice = 1 if not ultimo_bloque else ultimo_bloque[0] + 1
-                timestamp_bloque = datetime.now().timestamp()
-                datos_bloque = {
-                    'registros': [
-                        {
-                            'id': reg[0],
-                            'fecha_hora': reg[1].strftime('%Y-%m-%d %H:%M:%S'),
-                            'estado': reg[2],
-                            'hash': reg[3]
-                        } for reg in registros_sin_bloque
-                    ]
-                }
-                hash_anterior = '0' * 64 if not ultimo_bloque else ultimo_bloque[4]
-                nonce = 0
-                while True:
-                    bloque = {
-                        'indice': indice,
-                        'timestamp': timestamp_bloque,
-                        'datos': json.dumps(datos_bloque),
-                        'hash_anterior': hash_anterior,
-                        'nonce': nonce
+                    fecha_hora = datetime.fromtimestamp(timestamp/1000)
+                    estado = "VEHICULO DETECTADO"
+                    datos_peaje = {
+                        'fecha_hora': fecha_hora.strftime('%Y-%m-%d %H:%M:%S'),
+                        'estado': estado,
+                        'distancia': distancia
                     }
-                    hash_bloque = hashlib.sha256(str(bloque).encode()).hexdigest()
-                    if hash_bloque.startswith('00'):
-                        break
-                    nonce += 1
+                    hash_registro = hashlib.sha256(json.dumps(datos_peaje).encode()).hexdigest()
 
-                # Insertar nuevo bloque
-                cursor.execute(
-                    "INSERT INTO blockchain (indice, timestamp, datos, hash_anterior, hash, nonce) VALUES (%s, %s, %s, %s, %s, %s)",
-                    (indice, timestamp_bloque, json.dumps(datos_bloque), hash_anterior, hash_bloque, nonce)
-                )
+                    # Insertar en distancias
+                    cursor.execute(
+                        "INSERT INTO distancias (fecha_hora, distancia, hash, timestamp) VALUES (%s, %s, %s, %s)",
+                        (fecha_hora, distancia, hash_registro, timestamp)
+                    )
 
-                # Actualizar registros con el ID del bloque
-                ids_registros = [reg[0] for reg in registros_sin_bloque]
-                cursor.execute(
-                    "UPDATE registros_peaje SET bloque_id = %s WHERE id IN ({})".format(','.join(['%s'] * len(ids_registros))),
-                    [indice] + ids_registros
-                )
+                    # Insertar en registros_peaje
+                    cursor.execute(
+                        "INSERT INTO registros_peaje (fecha_hora, estado, hash) VALUES (%s, %s, %s)",
+                        (fecha_hora, estado, hash_registro)
+                    )
 
-            conn.commit()
-            print(f"✅ Reading saved and processed: {distancia}cm at {fecha_hora}")
-            return True
+                    # Verificar si se debe crear un nuevo bloque
+                    cursor.execute("SELECT id, fecha_hora, estado, hash FROM registros_peaje WHERE bloque_id IS NULL ORDER BY id LIMIT 5")
+                    registros_sin_bloque = cursor.fetchall()
+
+                    if len(registros_sin_bloque) == 5:
+                        # Obtener último bloque
+                        cursor.execute("SELECT * FROM blockchain ORDER BY indice DESC LIMIT 1")
+                        ultimo_bloque = cursor.fetchone()
+                        indice = 1 if not ultimo_bloque else ultimo_bloque[0] + 1
+                        timestamp_bloque = datetime.now().timestamp()
+                        datos_bloque = {
+                            'registros': [
+                                {
+                                    'id': reg[0],
+                                    'fecha_hora': reg[1].strftime('%Y-%m-%d %H:%M:%S'),
+                                    'estado': reg[2],
+                                    'hash': reg[3]
+                                } for reg in registros_sin_bloque
+                            ]
+                        }
+                        hash_anterior = '0' * 64 if not ultimo_bloque else ultimo_bloque[4]
+                        nonce = 0
+                        while True:
+                            bloque = {
+                                'indice': indice,
+                                'timestamp': timestamp_bloque,
+                                'datos': json.dumps(datos_bloque),
+                                'hash_anterior': hash_anterior,
+                                'nonce': nonce
+                            }
+                            hash_bloque = hashlib.sha256(str(bloque).encode()).hexdigest()
+                            if hash_bloque.startswith('00'):
+                                break
+                            nonce += 1
+
+                        # Insertar nuevo bloque
+                        cursor.execute(
+                            "INSERT INTO blockchain (indice, timestamp, datos, hash_anterior, hash, nonce) VALUES (%s, %s, %s, %s, %s, %s)",
+                            (indice, timestamp_bloque, json.dumps(datos_bloque), hash_anterior, hash_bloque, nonce)
+                        )
+
+                        # Actualizar registros con el ID del bloque
+                        ids_registros = [reg[0] for reg in registros_sin_bloque]
+                        cursor.execute(
+                            "UPDATE registros_peaje SET bloque_id = %s WHERE id IN ({})".format(','.join(['%s'] * len(ids_registros))),
+                            [indice] + ids_registros
+                        )
+
+                    conn.commit()
+                    print(f"✅ Vehículo detectado y registrado: {distancia}cm at {fecha_hora}")
+                    self.vehiculo_en_proceso = True  # Marcar que hay un vehículo en proceso
+
+                    return True
+                else:
+                    # Ya hay un vehículo en proceso, no registrar de nuevo
+                    return False
+            else:
+                # Si la distancia sube de 25cm, resetea el estado
+                if self.vehiculo_en_proceso:
+                    print("ℹ️ Vehículo salió del sensor, reseteando estado.")
+                self.vehiculo_en_proceso = False
+                return False
 
         except mysql.connector.Error as err:
             print(f"❌ Database error: {err}")
