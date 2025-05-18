@@ -10,6 +10,8 @@ from flask import current_app
 import sys
 import os
 from src.Controller.arduino_client import ArduinoClient
+import requests
+SERVER_URL = 'http://18.188.169.252:5000/api/arduino-data'
 
 # Agregar el directorio raíz al path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -373,12 +375,15 @@ def connect_to_aws():
     if client.connect():
         try:
             while True:
-                # Read distance data
-                distancia = client.read_data()
-                if distancia is not None:
-                    # Send to AWS server
-                    client.send_to_server(distancia)
-                time.sleep(0.1)
+                if client.in_waiting:
+                    line = client.readline().decode('utf-8').strip()
+                    if line == "VEHICULO_DETECTADO":
+                        # Solo aquí envía el registro
+                        distancia = 20  # O la última distancia leída, si la tienes almacenada
+                        payload = {"distancia": distancia, "timestamp": int(time.time() * 1000)}
+                        response = requests.post(SERVER_URL, json=payload, timeout=2)
+                        print(f"Enviado: {payload} | Respuesta: {response.json()}")
+                time.sleep(0.01)
         except KeyboardInterrupt:
             print("\n⚠️ Stopping connection")
         finally:
