@@ -65,7 +65,7 @@ void loop() {
       lecturas_salida = 0;
       lecturas_consecutivas = 0;
     }
-    delay(100);
+    delay(50);
     return;
   }
 
@@ -88,5 +88,5 @@ void loop() {
     lecturas_consecutivas = 0;
   }
 
-  delay(100);
+  delay(50);
 } // Added missing closing brace
