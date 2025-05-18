@@ -2,6 +2,9 @@ import mysql.connector
 from datetime import datetime, timedelta
 import hashlib
 import json
+import serial
+import requests
+import time
 
 class ArduinoModel:
     def __init__(self, config):
@@ -411,3 +414,25 @@ class ArduinoModel:
                 cursor.close()
             if 'conn' in locals() and conn.is_connected():
                 conn.close()
+
+def read_and_save():
+    SERIAL_PORT = 'COM3'  # o el que corresponda
+    BAUD_RATE = 9600
+    SERVER_URL = 'http://18.188.169.252:5000/api/arduino-data'
+
+    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    time.sleep(2)  # Espera a que el puerto esté listo
+
+    while True:
+        if ser.in_waiting:
+            line = ser.readline().decode('utf-8').strip()
+            if line.startswith('Distance:'):
+                try:
+                    distancia = float(line.split(':')[1].split('cm')[0].strip())
+                    # Enviar al servidor solo si la distancia cambió significativamente
+                    payload = {"distancia": distancia, "timestamp": int(time.time() * 1000)}
+                    response = requests.post(SERVER_URL, json=payload, timeout=2)
+                    print(f"Enviado: {payload} | Respuesta: {response.json()}")
+                except Exception as e:
+                    print(f"Error procesando/enviando: {e}")
+        time.sleep(0.01)  # 10ms entre lecturas, muy rápido
