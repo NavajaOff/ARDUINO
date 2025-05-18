@@ -375,8 +375,8 @@ def connect_to_aws():
     if client.connect():
         try:
             while True:
-                if client.in_waiting:
-                    line = client.readline().decode('utf-8').strip()
+                if client.connection and client.connection.in_waiting:
+                    line = client.connection.readline().decode('utf-8').strip()
                     if line == "VEHICULO_DETECTADO":
                         # Solo aquí envía el registro
                         distancia = 20  # O la última distancia leída, si la tienes almacenada
