@@ -57,7 +57,6 @@ void loop() {
   // Si hay un vehículo en proceso
   if (procesando_vehiculo) {
     if (distance > DISTANCIA_DETECCION) {
-      // Activar inmediatamente cuando no se detecta el vehículo
       procesando_vehiculo = false;
       vehiculoDetectado = false;
       servo.write(90);  // Cerrar barrera inmediatamente
@@ -80,13 +79,11 @@ void loop() {
         ultima_deteccion = tiempo_actual;
         
         servo.write(180);  // Abrir barrera
-        Serial.print("Distance: ");
-        Serial.print(distance);
-        Serial.println(" cm");
+        Serial.println("VEHICULO_DETECTADO");
     }
   } else {
     lecturas_consecutivas = 0;
   }
 
   delay(50);
-} // Added missing closing brace
+}
