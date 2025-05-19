@@ -42,3 +42,10 @@ export function hideLoadingOverlay() {
         overlay.style.display = 'none';
     }
 }
+
+export function showLoadingOverlay() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.style.display = 'flex'; // Or 'block', depending on your CSS
+    }
+}

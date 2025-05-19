@@ -1,7 +1,35 @@
 import { updateClock } from './modules/clock.js';
 import { updateTrafficChart } from './modules/charts.js';
-import { updateStats, updateDailyStats, hideLoadingOverlay } from './modules/ui.js';
-import { updateBlocksTable } from './modules/blocks.js';
+import { updateStats, updateDailyStats, hideLoadingOverlay, showLoadingOverlay } from './modules/ui.js';
+import { updateBlocksTable, setupPagination } from './modules/blocks.js';
+
+// Make functions globally accessible for onclick attributes
+window.changePage = async function(page) {
+    console.log(`Changing to page ${page}`);
+    showLoadingOverlay();
+
+    try {
+        const response = await fetch(`/blocks?page=${page}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Server error fetching blocks:', data.error);
+            // Potentially show an alert here
+        } else {
+            updateBlocksTable(data);
+            setupPagination(data.pagina_actual, data.total_paginas);
+        }
+
+    } catch (error) {
+        console.error('Error fetching blocks:', error);
+        // Potentially show an alert here
+    } finally {
+        hideLoadingOverlay();
+    }
+};
 
 function initializeSSE() {
     const eventSource = new EventSource('/events', { 
