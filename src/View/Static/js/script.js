@@ -31,6 +31,53 @@ window.changePage = async function(page) {
     }
 };
 
+// Helper function to show alerts
+function showAlert(message, type) {
+    const alertDiv = document.getElementById('statusAlert');
+    alertDiv.textContent = message;
+    alertDiv.className = `alert alert-${type} d-block mb-4`;
+}
+
+// Helper function to hide alerts
+function hideAlert() {
+    const alertDiv = document.getElementById('statusAlert');
+    alertDiv.className = 'alert d-none mb-4';
+    alertDiv.textContent = '';
+}
+
+// Function to handle integrity check
+async function verificarIntegridad() {
+    console.log('Verifying blockchain integrity...');
+    showLoadingOverlay();
+    hideAlert(); // Hide previous alerts
+
+    try {
+        const response = await fetch('/api/verificar_integridad');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.integridad !== undefined) {
+            if (data.integridad) {
+                showAlert('Integridad de la blockchain verificada y válida.', 'success');
+            } else {
+                showAlert('La integridad de la blockchain NO es válida.', 'danger');
+            }
+        } else if (data.error) {
+            showAlert(`Error al verificar integridad: ${data.error}`, 'danger');
+        } else {
+             showAlert('Respuesta inesperada del servidor al verificar integridad.', 'warning');
+        }
+
+    } catch (error) {
+        console.error('Error verifying integrity:', error);
+        showAlert(`Error de red al verificar integridad: ${error}`, 'danger');
+    } finally {
+        hideLoadingOverlay();
+    }
+}
+
 function initializeSSE() {
     const eventSource = new EventSource('/events', { 
         withCredentials: true 
