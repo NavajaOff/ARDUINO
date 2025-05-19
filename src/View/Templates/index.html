@@ -328,6 +328,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <!-- App JS -->
     <script src="{{ url_for('static', filename='js/script.js') }}" type="module"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const verificarBtn = document.getElementById('verificarIntegridad');
+            if (verificarBtn) {
+                verificarBtn.addEventListener('click', (event) => {
+                    event.preventDefault(); // Prevent default link behavior
+                    if (typeof verificarIntegridad === 'function') {
+                        verificarIntegridad();
+                    } else {
+                        console.error('verificarIntegridad function not found');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
