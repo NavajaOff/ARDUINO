@@ -1,20 +1,12 @@
 from src.config.conexion import config_mysql_aws
 import serial
 import time
-from serial.tools import list_ports
 import mysql.connector
 import hashlib
 import json
 from datetime import datetime
-from flask import current_app
-import sys
-import os
 from src.Controller.arduino_client import ArduinoClient
 import requests
-SERVER_URL = 'http://18.188.169.252:5000/api/arduino-data'
-
-# Agregar el directorio raíz al path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 class ArduinoConnection:
     def __init__(self):
@@ -368,6 +360,7 @@ def obtener_ultimos_bloques(page=1, limit=10):
             conn.close()
 
 def connect_to_aws():
+    SERVER_URL = 'http://18.188.169.252:5000/api/arduino-data'
     # Create client instance
     client = ArduinoClient()
     

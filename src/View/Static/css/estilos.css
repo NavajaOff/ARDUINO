@@ -41,24 +41,6 @@
     overflow-y: auto;
 }
 
-/* Estilos para el hash en último registro */
-.hash-container {
-    max-width: 100%;
-    overflow-x: auto;
-}
-
-.hash-text {
-    font-family: monospace;
-    font-size: 0.9rem;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    border: 1px solid #dee2e6;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
-    display: inline-block;
-}
-
 #loadingOverlay {
     position: fixed;
     top: 0;
