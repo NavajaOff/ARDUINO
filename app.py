@@ -48,7 +48,8 @@ def get_trafico_por_hora():
 
 @app.route('/api/verificar_integridad')
 def api_verificar_integridad():
-    return arduino_controller.verificar_integridad()
+    integridad_correcta = arduino_controller.verificar_integridad()
+    return jsonify({'integridad': integridad_correcta})
 
 @app.route('/api/estadisticas_diarias')
 def get_estadisticas_diarias():
