@@ -56,7 +56,8 @@ def get_estadisticas_diarias():
 
 @app.route('/api/ultimos_bloques')
 def get_ultimos_bloques():
-    return jsonify(arduino_model.get_ultimos_bloques())
+    page = request.args.get('page', 1, type=int)
+    return jsonify(arduino_model.get_ultimos_bloques(pagina=page))
 
 @app.route('/api/datos_tiempo_real')
 def datos_tiempo_real():

@@ -9,7 +9,7 @@ window.changePage = async function(page) {
     showLoadingOverlay();
 
     try {
-        const response = await fetch(`/blocks?page=${page}`);
+        const response = await fetch(`/api/ultimos_bloques?page=${page}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
