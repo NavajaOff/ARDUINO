@@ -78,6 +78,9 @@ async function verificarIntegridad() {
     }
 }
 
+// Make verificarIntegridad globally accessible
+window.verificarIntegridad = verificarIntegridad;
+
 function initializeSSE() {
     const eventSource = new EventSource('/events', { 
         withCredentials: true 
