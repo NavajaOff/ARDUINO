@@ -66,11 +66,6 @@ export function updateBlocksTable(data) {
             <td class="text-truncate" style="max-width: 150px;">${bloque.hash}</td>
             <td class="text-truncate" style="max-width: 150px;">${bloque.hash_anterior}</td>
             <td>${bloque.nonce}</td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="showBlockDetails(${bloque.indice})">
-                    <i class="fas fa-info-circle"></i>
-                </button>
-            </td>
         </tr>
     `).join('');
 
