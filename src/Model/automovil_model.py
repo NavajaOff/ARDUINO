@@ -63,6 +63,13 @@ class Automovil:
 					print(f"Error al cerrar la conexión: {e}")
 
 	def guardar(self):
+		# Validación de datos
+		if not self.placa or not isinstance(self.placa, str):
+			print("Error: La placa no puede estar vacía y debe ser un string.")
+			return
+		if not isinstance(self.saldo, (int, float)) or self.saldo < 0:
+			print("Error: El saldo debe ser un número mayor o igual a 0.")
+			return
 		conn = None
 		cursor = None
 		try:
