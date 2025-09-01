@@ -1,12 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for
-from src.Controller.automovil_controller import AutomovilController
 import os, sys
+# Añadir la carpeta src al sys.path de forma global
+src_path = os.path.abspath(os.path.dirname(__file__))
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
-# Asegura que src esté en el path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from flask import Flask, render_template, request, redirect, url_for
+from Controller.automovil_controller import AutomovilController
 
 # Configura la ruta absoluta a los templates
-template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'View', 'Templates'))
+template_dir = os.path.abspath(os.path.join(src_path, 'View', 'Templates'))
 app = Flask(__name__, template_folder=template_dir)
 
 @app.route('/')
