@@ -2,11 +2,20 @@ from flask import Flask, render_template, jsonify, make_response, Response, stre
 from datetime import datetime
 from src.Controller.arduino_controller import ArduinoController
 from src.Model.arduino_model import ArduinoModel
-from src.config.conexion import config_mysql_aws
 import json
 import time
 import mysql.connector
 import hashlib
+import os
+
+# Determinar qué configuración usar basado en el entorno
+if os.environ.get('ENVIRONMENT') == 'production':
+    from src.config.conexion_aws import config_mysql_aws as db_config
+else:
+    try:
+        from src.config.conexion_local import config_mysql_local as db_config
+    except ImportError:
+        from src.config.conexion_aws import config_mysql_aws as db_config
 
 app = Flask(__name__, 
             template_folder='src/View/Templates',
@@ -14,7 +23,7 @@ app = Flask(__name__,
 
 
 # Inicialización del modelo y controlador
-arduino_model = ArduinoModel(config_mysql_aws)
+arduino_model = ArduinoModel(db_config)
 arduino_controller = ArduinoController(arduino_model)
 
 
