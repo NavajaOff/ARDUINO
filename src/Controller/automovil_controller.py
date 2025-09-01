@@ -4,7 +4,7 @@ class AutomovilController:
     @staticmethod
     def obtener_automovil_por_id(id):
         try:
-            automovil = Automovil.obtener_automovil_por_id(id)
+            automovil = Automovil.obtener_por_id(id)
             if automovil:
                 return {
                     "id": automovil.id,
@@ -34,7 +34,7 @@ class AutomovilController:
     @staticmethod
     def crear_automovil(placa, saldo=0.0):
         try:
-            automovil = Automovil.crear_automovil(placa=placa, saldo=saldo)
+            automovil = Automovil(placa=placa, saldo=saldo)
             automovil.guardar()
             if automovil.id:
                 return {
@@ -50,7 +50,7 @@ class AutomovilController:
     @staticmethod
     def actualizar_automovil(id, placa=None, saldo=None):
         try:
-            automovil = Automovil.obtener_automovil_por_id(id)
+            automovil = Automovil.obtener_por_id(id)
             if automovil:
                 if placa is not None:
                     automovil.placa = placa
@@ -70,7 +70,7 @@ class AutomovilController:
     @staticmethod
     def eliminar_automovil(id):
         try:
-            automovil = Automovil.obtener_automovil_por_id(id)
+            automovil = Automovil.obtener_por_id(id)
             if automovil:
                 automovil.eliminar()
                 return True
