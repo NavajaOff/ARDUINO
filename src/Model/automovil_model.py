@@ -10,37 +10,61 @@ class Automovil:
 
 	@staticmethod
 	def obtener_por_id(id):
+		conn = None
+		cursor = None
 		try:
 			conn = mysql.connector.connect(**config_mysql)
 			cursor = conn.cursor(dictionary=True)
 			cursor.execute("SELECT * FROM automovil WHERE id = %s", (id,))
 			row = cursor.fetchone()
-			cursor.close()
-			conn.close()
 			if row:
 				return Automovil(row['id'], row['placa'], row['saldo'])
 			return None
 		except mysql.connector.Error as err:
 			print(f"Error al obtener automovil por id: {err}")
 			return None
+		finally:
+			if cursor:
+				try:
+					cursor.close()
+				except Exception as e:
+					print(f"Error al cerrar el cursor: {e}")
+			if conn:
+				try:
+					conn.close()
+				except Exception as e:
+					print(f"Error al cerrar la conexión: {e}")
 
 	@staticmethod
 	def obtener_por_placa(placa):
+		conn = None
+		cursor = None
 		try:
 			conn = mysql.connector.connect(**config_mysql)
 			cursor = conn.cursor(dictionary=True)
 			cursor.execute("SELECT * FROM automovil WHERE placa = %s", (placa,))
 			row = cursor.fetchone()
-			cursor.close()
-			conn.close()
 			if row:
 				return Automovil(row['id'], row['placa'], row['saldo'])
 			return None
 		except mysql.connector.Error as err:
 			print(f"Error al obtener automovil por placa: {err}")
 			return None
+		finally:
+			if cursor:
+				try:
+					cursor.close()
+				except Exception as e:
+					print(f"Error al cerrar el cursor: {e}")
+			if conn:
+				try:
+					conn.close()
+				except Exception as e:
+					print(f"Error al cerrar la conexión: {e}")
 
 	def guardar(self):
+		conn = None
+		cursor = None
 		try:
 			conn = mysql.connector.connect(**config_mysql)
 			cursor = conn.cursor()
@@ -56,20 +80,40 @@ class Automovil:
 					(self.placa, self.saldo, self.id)
 				)
 			conn.commit()
-			cursor.close()
-			conn.close()
 		except mysql.connector.Error as err:
 			print(f"Error al guardar automovil: {err}")
+		finally:
+			if cursor:
+				try:
+					cursor.close()
+				except Exception as e:
+					print(f"Error al cerrar el cursor: {e}")
+			if conn:
+				try:
+					conn.close()
+				except Exception as e:
+					print(f"Error al cerrar la conexión: {e}")
 
 	def eliminar(self):
 		if self.id is not None:
+			conn = None
+			cursor = None
 			try:
 				conn = mysql.connector.connect(**config_mysql)
 				cursor = conn.cursor()
 				cursor.execute("DELETE FROM automovil WHERE id=%s", (self.id,))
 				conn.commit()
-				cursor.close()
-				conn.close()
 				self.id = None
 			except mysql.connector.Error as err:
 				print(f"Error al eliminar automovil: {err}")
+			finally:
+				if cursor:
+					try:
+						cursor.close()
+					except Exception as e:
+						print(f"Error al cerrar el cursor: {e}")
+				if conn:
+					try:
+						conn.close()
+					except Exception as e:
+						print(f"Error al cerrar la conexión: {e}")
