@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REVISAR SALDO</title>
+</head>
+
+<h2> revisar saldo</h2>
+<form method="POST">
+    <label>Ingrese la placa del vehiculo</label>
+    <input type="text" name="placa" required>
+    <button type="submit">Revisar</button>
+</form>
+
+{% if saldo %}
+    <p>Saldo: {{ saldo }}</p>
+{% endif %}
