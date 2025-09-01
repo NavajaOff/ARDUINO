@@ -10,12 +10,13 @@ PUERTO_SERIAL = 'COM3'  # Cambiar según tu puerto
 VELOCIDAD = 9600
 
 # Configuración de la conexión MySQL
-config_mysql = {
-    'user': 'root',
-    'password': '',
-    'host': 'localhost',
+config_mysql_aws = {
+    'user': 'arduino_user',
+    'password': 'Arduino123!',
+    'host': '18.188.169.252',  # o la IP pública si es remoto
     'database': 'arduino_peaje',
-    'raise_on_warnings': True
+    'raise_on_warnings': True,
+    'auth_plugin': 'mysql_native_password'
 }
 # Clase simple para implementar blockchain
 class Bloque:
@@ -84,7 +85,7 @@ blockchain_peaje = Blockchain()
 # Crear tablas en MySQL si no existen
 def inicializar_bd():
     try:
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor()
         
         # Tabla para registros de paso de vehículos
@@ -135,7 +136,7 @@ def guardar_registro(timestamp):
         nuevo_bloque = blockchain_peaje.agregar_bloque(json.dumps(datos))
         
         # Guardar en MySQL
-        conn = mysql.connector.connect(**config_mysql)
+        conn = mysql.connector.connect(**config_mysql_aws)
         cursor = conn.cursor()
         
         # Insertar en registros_peaje
