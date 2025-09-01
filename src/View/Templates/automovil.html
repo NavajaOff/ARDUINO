@@ -9,12 +9,15 @@
 <body>
     <h1>CRUD VEHÍCULOS</h1>
 
-        <a href="agregar_vehiculo.html"><button>Agregar vehículo</button></a>
+    <a href="{{ url_for('agregar_automovil') }}"><button>Agregar vehículo</button></a>
 
-        <a href="revisar_vehiculo.html"><button>Revisar vehículo</button></a>
+    <!-- Para revisar, actualizar y eliminar, normalmente se necesita el id del vehículo -->
+    <!-- Aquí solo se muestra el botón, pero lo ideal es listar los vehículos y poner el id en el enlace -->
+    <a href="{{ url_for('listar_automoviles') }}"><button>Revisar vehículos</button></a>
 
-        <a href="actualizar_vehiculo.html"><button>Actualizar vehículo</button></a>
+    <!-- Ejemplo con id=1, deberías generar estos enlaces dinámicamente en una tabla/lista -->
+    <a href="{{ url_for('actualizar_automovil', id=1) }}"><button>Actualizar vehículo</button></a>
 
-        <a href="eliminar_vehiculo.html"><button>Eliminar vehículo</button></a>
+    <a href="{{ url_for('eliminar_automovil', id=1) }}"><button>Eliminar vehículo</button></a>
 </body>
 </html>
