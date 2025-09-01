@@ -1,9 +1,28 @@
+# Archivos compilados de Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
 *.PYC
 *.PYO
 *.PYD
+
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# Configuración del sistema
+.DS_Store
+*.log
+
+# Archivos de IDE
+.vscode/
+.idea/
+
+# Archivos de entorno
+.env
 
 
