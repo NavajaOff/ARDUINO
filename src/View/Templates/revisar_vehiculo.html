@@ -2,18 +2,194 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REVISAR VEHICULO</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REVISAR VEHÍCULO</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .form-body {
+            padding: 2rem;
+        }
+
+        .form-control:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+        }
+
+        .btn-check {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-check:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
+            color: white;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .input-group-text {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            border: none;
+        }
+
+        .form-floating > label {
+            color: #6c757d;
+        }
+
+        .success-animation {
+            animation: pulse 0.6s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
 </head>
 
-<h2> revisar vehiculo</h2>
-<form method="POST">
-    <label>Ingrese la placa del vehiculo</label>
-    <input type="text" name="placa" required>
-    <button type="submit">Revisar</button>
-</form>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7">
+                <div class="form-container">
+                    <!-- Header -->
+                    <div class="form-header">
+                        <i class="bi bi-search fs-1 mb-3"></i>
+                        <h2 class="mb-0">Revisar Vehículo</h2>
+                        <p class="mb-0 opacity-75">Ingrese la placa para revisar el vehículo</p>
+                    </div>
 
-{% if mensaje %}
-   <p>{{ mensaje }}</p>
-{% endif %}
+                    <!-- Form Body -->
+                    <div class="form-body">
+                        <form method="POST" class="needs-validation" novalidate>
+                            <div class="form-floating mb-4">
+                                <input type="text" class="form-control text-uppercase" id="placa" name="placa" placeholder="Placa del vehículo" pattern="[A-Z]{3}[0-9]{3}" title="Formato: ABC123" required />
+                                <label for="placa">
+                                    <i class="bi bi-credit-card me-2"></i>Placa del Vehículo
+                                </label>
+                                <div class="valid-feedback">
+                                    ¡Placa válida!
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor ingrese una placa válida (formato: ABC123).
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Formato: 3 letras seguidas de 3 números (ej: ABC123)
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-check">
+                                    <i class="bi bi-search me-2"></i>Revisar
+                                </button>
+                            </div>
+                        </form>
+
+                        {% if mensaje %}
+                        <div class="alert alert-info mt-4 success-animation" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            {{ mensaje }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script para validación y efectos -->
+    <script>
+        // Validación de formularios Bootstrap
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Convertir placa a mayúsculas automáticamente
+        document.getElementById('placa').addEventListener('input', function (e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Validación en tiempo real para formato de placa
+        document.getElementById('placa').addEventListener('input', function (e) {
+            const placa = e.target.value;
+            const pattern = /^[A-Z]{3}[0-9]{3}$/;
+
+            if (placa.length === 6 && pattern.test(placa)) {
+                e.target.classList.add('is-valid');
+                e.target.classList.remove('is-invalid');
+            } else if (placa.length > 0) {
+                e.target.classList.add('is-invalid');
+                e.target.classList.remove('is-valid');
+            } else {
+                e.target.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+    </script>
+</body>
+
+</html>
