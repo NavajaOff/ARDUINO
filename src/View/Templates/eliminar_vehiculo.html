@@ -5,16 +5,306 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ELIMINAR VEHICULO</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .form-body {
+            padding: 2rem;
+        }
+        
+        .form-control:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn-cancel {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cancel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffc107;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .confirmation-box {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #dc3545;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: none;
+        }
+        
+        .form-floating > label {
+            color: #6c757d;
+        }
+
+        .danger-shake {
+            animation: shake 0.6s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
 </head>
 
-<h2> eliminar vehiculo</h2>
-<form method="POST">
-    <label>Ingrese la Placa del vehículo</label>
-    <input type="text" name="placa" required>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <div class="form-container">
+                    <!-- Header -->
+                    <div class="form-header">
+                        <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                        <h2 class="mb-0">Eliminar Vehículo</h2>
+                        <p class="mb-0 opacity-75">¡Acción irreversible! Procede con cuidado</p>
+                    </div>
+                    
+                    <!-- Warning Box -->
+                    <div class="form-body">
+                        <div class="warning-box">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-shield-exclamation fs-2 text-warning me-3"></i>
+                                <div>
+                                    <h5 class="text-warning mb-2">⚠️ Advertencia Importante</h5>
+                                    <p class="mb-0 text-dark">
+                                        Esta acción <strong>eliminará permanentemente</strong> el vehículo y todos sus datos asociados. 
+                                        <strong>No se puede deshacer.</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
 
-    <button type="submit">Eliminar</button>
-</form>
+                        <form method="POST" class="needs-validation" novalidate id="deleteForm">
+                            <!-- Placa del Vehículo -->
+                            <div class="form-floating mb-4">
+                                <input type="text" class="form-control text-uppercase" id="placa" name="placa" 
+                                       placeholder="Placa del vehículo" pattern="[A-Z]{3}[0-9]{3}" 
+                                       title="Formato: ABC123" required>
+                                <label for="placa">
+                                    <i class="bi bi-credit-card me-2"></i>Placa del Vehículo a Eliminar
+                                </label>
+                                <div class="invalid-feedback">
+                                    Por favor ingrese una placa válida (formato: ABC123).
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Formato: 3 letras seguidas de 3 números (ej: ABC123)
+                                    </small>
+                                </div>
+                            </div>
 
-{% if mensaje %}
-   <p>{{ mensaje }}</p>
-{% endif %}
+                            <!-- Confirmación adicional -->
+                            <div class="confirmation-box" id="confirmationBox">
+                                <h6 class="text-danger mb-3">
+                                    <i class="bi bi-shield-x me-2"></i>Confirmación Final
+                                </h6>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                    <label class="form-check-label text-dark" for="confirmDelete">
+                                        Confirmo que deseo eliminar permanentemente este vehículo
+                                    </label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="confirmText" 
+                                           placeholder="Escriba ELIMINAR para confirmar" required>
+                                    <label for="confirmText">Escriba "ELIMINAR" para confirmar</label>
+                                    <div class="invalid-feedback">
+                                        Debe escribir exactamente "ELIMINAR" para continuar.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <a href="/" class="btn btn-primary btn-cancel w-100">
+                                        <i class="bi bi-arrow-left me-2"></i>
+                                        Cancelar
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-danger btn-delete w-100" id="deleteBtn" onclick="showConfirmation()">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Eliminar Vehículo
+                                    </button>
+                                    <button type="submit" class="btn btn-danger btn-delete w-100 d-none" id="finalDeleteBtn">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Confirmar Eliminación
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <!-- Mensaje de respuesta -->
+                        {% if mensaje %}
+                        <div class="alert alert-warning mt-4" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            {{ mensaje }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Validación de formularios Bootstrap
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        const confirmText = document.getElementById('confirmText').value;
+                        if (form.checkValidity() === false || confirmText !== 'ELIMINAR') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            
+                            if (confirmText !== 'ELIMINAR') {
+                                document.getElementById('confirmText').classList.add('is-invalid');
+                                document.querySelector('.form-container').classList.add('danger-shake');
+                                setTimeout(() => {
+                                    document.querySelector('.form-container').classList.remove('danger-shake');
+                                }, 600);
+                            }
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Convertir placa a mayúsculas automáticamente
+        document.getElementById('placa').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Mostrar confirmación cuando se ingresa una placa válida
+        function showConfirmation() {
+            const placa = document.getElementById('placa').value;
+            const pattern = /^[A-Z]{3}[0-9]{3}$/;
+            
+            if (pattern.test(placa)) {
+                document.getElementById('confirmationBox').style.display = 'block';
+                document.getElementById('deleteBtn').classList.add('d-none');
+                document.getElementById('finalDeleteBtn').classList.remove('d-none');
+                
+                // Scroll suave hasta la confirmación
+                document.getElementById('confirmationBox').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            } else {
+                // Validar el campo de placa
+                document.getElementById('placa').classList.add('is-invalid');
+                document.querySelector('.form-container').classList.add('danger-shake');
+                setTimeout(() => {
+                    document.querySelector('.form-container').classList.remove('danger-shake');
+                }, 600);
+            }
+        }
+
+        // Validar texto de confirmación en tiempo real
+        document.getElementById('confirmText').addEventListener('input', function(e) {
+            const text = e.target.value.toUpperCase();
+            e.target.value = text;
+            
+            if (text === 'ELIMINAR') {
+                e.target.classList.add('is-valid');
+                e.target.classList.remove('is-invalid');
+            } else if (text.length > 0) {
+                e.target.classList.add('is-invalid');
+                e.target.classList.remove('is-valid');
+            }
+        });
+
+        // Animación en el botón al enviar
+        document.getElementById('finalDeleteBtn').addEventListener('click', function(e) {
+            const form = document.getElementById('deleteForm');
+            if (form.checkValidity() && document.getElementById('confirmText').value === 'ELIMINAR') {
+                this.innerHTML = '<i class="bi bi-trash me-2 spinner-border spinner-border-sm"></i>Eliminando...';
+                this.disabled = true;
+            }
+        });
+
+        // Resetear confirmación si cambia la placa
+        document.getElementById('placa').addEventListener('input', function() {
+            document.getElementById('confirmationBox').style.display = 'none';
+            document.getElementById('deleteBtn').classList.remove('d-none');
+            document.getElementById('finalDeleteBtn').classList.add('d-none');
+            document.getElementById('confirmDelete').checked = false;
+            document.getElementById('confirmText').value = '';
+        });
+    </script>
+</body>
+
+</html>
