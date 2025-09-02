@@ -1,3 +1,12 @@
+# Configuración de la conexión MySQL local
+config_mysql = {
+    'user': 'root',
+    'password': '',
+    'host': 'localhost',
+    'database': 'arduino_peaje',
+    'raise_on_warnings': True,
+    'auth_plugin': 'mysql_native_password'
+}
 import serial
 import hashlib
 import datetime
@@ -115,7 +124,7 @@ def inicializar_bd():
     except mysql.connector.Error as err:
         print(f"Error al inicializar la BD: {err}")
     finally:
-        if conn.is_connected():
+        if 'conn' in locals() and conn.is_connected():
             cursor.close()
             conn.close()
 
