@@ -1,6 +1,6 @@
 
 import mysql.connector
-from src.config.conexion import config_mysql
+from src.config.conexion import config_mysql_aws, config_mysql
 
 class Automovil:
 	def __init__(self, id=None, placa=None, saldo=0.0):
