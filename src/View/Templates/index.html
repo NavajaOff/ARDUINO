@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Sistema de Peaje</title>
+    <title>Dashboard Sistema de Peaje con Blockchain</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js -->
@@ -21,6 +21,7 @@
             stats: {% if stats %}{{ stats|tojson|safe }}{% else %}null{% endif %},
             trafico: {% if trafico_por_hora %}{{ trafico_por_hora|tojson|safe }}{% else %}[]{% endif %},
             estadisticas: {% if estadisticas_diarias %}{{ estadisticas_diarias|tojson|safe }}{% else %}[]{% endif %},
+            bloques: {% if ultimos_bloques %}{{ ultimos_bloques|tojson|safe }}{% else %}{"bloques":[],"total_paginas":0,"pagina_actual":1}{% endif %},
             error: {% if error %}{{ error|tojson|safe }}{% else %}null{% endif %}
         };
     
@@ -50,13 +51,19 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-link me-2"></i>
-                Sistema de Peaje
+                Sistema de Peaje con Blockchain
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="verificarIntegridad">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Verificar Integridad
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <span class="nav-link" id="reloj"></span>
                     </li>
@@ -88,6 +95,20 @@
                     </div>
                 </div>
             </div>
+            <!-- Total Bloques -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stat-icon text-success">
+                            <i class="fas fa-cubes"></i>
+                        </div>
+                        <div>
+                            <h5 class="stat-value" id="totalBloques">--</h5>
+                            <div class="stat-title">Total Bloques</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Registros 24h -->
             <div class="col-md-3">
                 <div class="card">
@@ -102,6 +123,20 @@
                     </div>
                 </div>
             </div>
+            <!-- Integridad -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stat-icon text-info">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div>
+                            <h5 class="stat-value" id="integridadStatus">--</h5>
+                            <div class="stat-title">Estado Integridad</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Último Registro -->
@@ -109,22 +144,22 @@
         <div class="row mt-4">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-primary">
+                    <div class="card-header bg-blockchain">
                         <i class="fas fa-info-circle me-2"></i>
                         Último Registro
                     </div>
                     <div class="card-body">
                         <div class="row align-items-center">
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <strong>ID:</strong> 
                                 <span id="ultimoRegistroId">{{ stats.ultimo_registro.id }}</span>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <strong>Fecha/Hora:</strong> 
                                 <span id="ultimoRegistroFecha">{{ stats.ultimo_registro.fecha_hora }}</span>
                             </div>
-                            <div class="col-md-6">
-                                <strong>Referencia:</strong> 
+                            <div class="col-md-8">
+                                <strong>Hash:</strong> 
                                 <div class="mt-1">
                                     <code id="ultimoRegistroHash" class="p-2 bg-light rounded w-100 d-inline-block">
                                         {{ stats.ultimo_registro.hash }}
@@ -142,7 +177,7 @@
             <!-- Traffic Chart -->
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header bg-primary">
+                    <div class="card-header bg-blockchain">
                         <i class="fas fa-chart-line me-2"></i>
                         Tráfico por Hora (Últimas 24h)
                     </div>
@@ -154,7 +189,7 @@
             <!-- Daily Stats -->
             <div class="col-md-4">
                 <div class="card">
-                    <div class="card-header bg-primary">
+                    <div class="card-header bg-blockchain">
                         <i class="fas fa-calendar-day me-2"></i>
                         Estadísticas Diarias
                     </div>
@@ -221,11 +256,96 @@
     </div>
 
 
+    <!-- Block Detail Modal -->
+    <div class="modal fade" id="blockDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-blockchain">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cube me-2"></i>
+                        Detalles del Bloque #<span id="modalBlockIndex"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3" id="modalBlockStatus"></div>
+
+                    <h6 class="border-bottom pb-2 mb-3">Información del Bloque</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Hash:</strong>
+                            <div class="text-break">
+                                <code id="modalBlockHash"></code>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" id="copyBlockHash">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Hash Anterior:</strong>
+                            <div class="text-break">
+                                <code id="modalBlockPrevHash"></code>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Fecha/Hora:</strong>
+                            <div id="modalBlockTime"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Nonce:</strong>
+                            <div id="modalBlockNonce"></div>
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mb-3">Datos</h6>
+                    <pre id="modalBlockData" class="bg-light p-3 rounded"></pre>
+
+                    <h6 class="border-bottom pb-2 mb-3">Registros Asociados</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover" id="modalBlockRegistros">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha/Hora</th>
+                                    <th>Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Registros se agregarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <!-- App JS -->
     <script src="{{ url_for('static', filename='js/script.js') }}" type="module"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const verificarBtn = document.getElementById('verificarIntegridad');
+            if (verificarBtn) {
+                verificarBtn.addEventListener('click', (event) => {
+                    event.preventDefault(); // Prevent default link behavior
+                    if (typeof verificarIntegridad === 'function') {
+                        verificarIntegridad();
+                    } else {
+                        console.error('verificarIntegridad function not found');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
