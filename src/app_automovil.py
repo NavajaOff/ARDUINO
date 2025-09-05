@@ -14,6 +14,10 @@ app = Flask(__name__, template_folder=template_dir)
 def index():
     return redirect(url_for('listar_automoviles'))
 
+@app.route('/index')
+def mostrar_index():
+    return render_template('index.html')
+
 @app.route('/automoviles', methods=['GET', 'POST'])
 def listar_automoviles():
     automoviles = AutomovilController.obtener_todos()
