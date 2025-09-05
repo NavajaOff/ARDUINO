@@ -1,5 +1,15 @@
 import mysql.connector
+import os
 from src.config.conexion import config_mysql_aws, config_mysql
+
+# Determinar qué configuración usar basado en el entorno
+if os.environ.get('ENVIRONMENT') == 'production':
+    db_config = config_mysql_aws
+else:
+    try:
+        from src.config.conexion_local import config_mysql_local as db_config
+    except ImportError:
+        db_config = config_mysql_aws
 
 class Automovil:
     def __init__(self, id=None, placa=None, saldo=0.0):
@@ -12,7 +22,7 @@ class Automovil:
         conn = None
         cursor = None
         try:
-            conn = mysql.connector.connect(**config_mysql)
+            conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM automovil WHERE id = %s", (id,))
             row = cursor.fetchone()
@@ -39,7 +49,7 @@ class Automovil:
         conn = None
         cursor = None
         try:
-            conn = mysql.connector.connect(**config_mysql)
+            conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM automovil WHERE placa = %s", (placa,))
             row = cursor.fetchone()
@@ -72,7 +82,7 @@ class Automovil:
         conn = None
         cursor = None
         try:
-            conn = mysql.connector.connect(**config_mysql)
+            conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor()
             if self.id is None:
                 cursor.execute(
@@ -105,7 +115,7 @@ class Automovil:
             conn = None
             cursor = None
             try:
-                conn = mysql.connector.connect(**config_mysql)
+                conn = mysql.connector.connect(**db_config)
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM automovil WHERE id=%s", (self.id,))
                 conn.commit()
@@ -129,7 +139,7 @@ class Automovil:
         conn = None
         cursor = None
         try:
-            conn = mysql.connector.connect(**config_mysql)
+            conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM automovil")
             rows = cursor.fetchall()
