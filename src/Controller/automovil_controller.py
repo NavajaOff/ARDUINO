@@ -51,21 +51,31 @@ class AutomovilController:
     def actualizar_automovil(id, placa=None, saldo=None):
         try:
             automovil = Automovil.obtener_por_id(id)
-            if automovil:
-                if placa is not None:
-                    automovil.placa = placa
-                if saldo is not None:
-                    automovil.saldo = saldo
-                automovil.guardar()
-                return {
-                    "id": automovil.id,
-                    "placa": automovil.placa,
-                    "saldo": automovil.saldo
-                }
-            return None
+            if not automovil:
+                return {"error": "Vehículo no encontrado."}
+
+            # Validar duplicado
+            if placa:
+                existente = Automovil.obtener_por_placa(placa)
+                if existente and existente.id != id:
+                    return {"error": "La placa ya existe en otro vehículo."}
+                automovil.placa = placa
+
+            if saldo is not None:
+                automovil.saldo = saldo
+
+            automovil.guardar()
+
+            return {
+                "id": automovil.id,
+                "placa": automovil.placa,
+                "saldo": automovil.saldo
+            }
+
         except Exception as e:
-            print(f"Error en el controlador al actualizar un automóvil: {e}")
-            return None
+            print(f"Error al actualizar vehículo: {e}")
+            return {"error": "Ocurrió un error al actualizar."}
+
 
     @staticmethod
     def eliminar_automovil(id):
@@ -78,3 +88,12 @@ class AutomovilController:
         except Exception as e:
             print(f"Error en el controlador al eliminar automovil: {e}")
             return False
+
+    @staticmethod
+    def obtener_todos():
+        try:
+            automoviles = Automovil.obtener_todos()
+            return automoviles
+        except Exception as e:
+            print(f"Error en el controlador al obtener todos los automóviles: {e}")
+            return []
