@@ -13,10 +13,28 @@ app = Flask(__name__, template_folder=template_dir)
 def index():
     return redirect(url_for('listar_automoviles'))
 
-@app.route('/automoviles')
+@app.route('/automoviles', methods=['GET', 'POST'])
 def listar_automoviles():
     automoviles = AutomovilController.obtener_todos()
-    return render_template('automovil.html', automoviles=automoviles)
+    mensaje = ""
+    
+    if request.method == 'POST':
+        criterio = request.form.get('criterio')  # 'id' o 'placa'
+        valor = request.form.get('valor')
+        if criterio == 'id':
+            try:
+                automovil = AutomovilController.obtener_automovil_por_id(int(valor))
+                automoviles = [automovil] if automovil else []
+            except ValueError:
+                automoviles = []
+                mensaje = "ID debe ser un número."
+        elif criterio == 'placa':
+            automovil = AutomovilController.obtener_automovil_por_placa(valor)
+            automoviles = [automovil] if automovil else []
+        if not automoviles and not mensaje:
+            mensaje = "No se encontró ningún vehículo con ese valor."
+    
+    return render_template('automovil.html', automoviles=automoviles, mensaje=mensaje)
 
 @app.route('/agregar', methods=['GET', 'POST'])
 def agregar_automovil():
@@ -44,6 +62,25 @@ def eliminar_automovil(id):
         return redirect(url_for('listar_automoviles'))
     automovil = AutomovilController.obtener_automovil_por_id(id)
     return render_template('eliminar_vehiculo.html', automovil=automovil)
+
+@app.route('/buscar', methods=['GET', 'POST'])
+def buscar_automovil():
+    automovil = None
+    mensaje = ""
+    if request.method == 'POST':
+        criterio = request.form.get('criterio')  # 'id' o 'placa'
+        valor = request.form.get('valor')
+        if criterio == 'id':
+            try:
+                automovil = AutomovilController.obtener_automovil_por_id(int(valor))
+            except ValueError:
+                mensaje = "ID debe ser un número."
+        elif criterio == 'placa':
+            automovil = AutomovilController.obtener_automovil_por_placa(valor)
+
+        if not automovil and not mensaje:
+            mensaje = "No se encontró ningún vehículo con ese valor."
+    return render_template('buscar_vehiculo.html', automovil=automovil, mensaje=mensaje)
 
 if __name__ == '__main__':
     app.run(debug=True)

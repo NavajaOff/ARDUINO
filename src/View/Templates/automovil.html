@@ -1,38 +1,43 @@
-<!DOCTYPE html>
-<html lang="es">
+<h1>CRUD VEHÍCULOS</h1>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD SALDO VEHÍCULO</title>
-</head>
-<body>
-    <h1>CRUD VEHÍCULOS</h1>
+<a href="{{ url_for('agregar_automovil') }}"><button>Agregar vehículo</button></a>
+<br><br>
 
-    <a href="{{ url_for('agregar_automovil') }}"><button>Agregar vehículo</button></a>
-    <br><br>
+<h2>Buscar vehículo</h2>
+<form method="POST">
+    <label>Buscar por:</label>
+    <select name="criterio">
+        <option value="id">ID</option>
+        <option value="placa">Placa</option>
+    </select>
+    <input type="text" name="valor" required>
+    <button type="submit">Buscar</button>
+</form>
 
-    <h2>Lista de vehículos</h2>
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>ID</th>
-            <th>Placa</th>
-            <th>Saldo</th>
-            <th>Acciones</th>
-        </tr>
-        {% for auto in automoviles %}
-        <tr>
-            <td>{{ auto.id }}</td>
-            <td>{{ auto.placa }}</td>
-            <td>{{ auto.saldo }}</td>
-            <td>
-                <a href="{{ url_for('actualizar_automovil', id=auto.id) }}">Actualizar</a> |
-                <form action="{{ url_for('eliminar_automovil', id=auto.id) }}" method="post" style="display:inline;">
-                    <button type="submit">Eliminar</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+{% if mensaje %}
+    <p style="color:red;">{{ mensaje }}</p>
+{% endif %}
 
-</body>
-</html>
+<a href="{{ url_for('listar_automoviles') }}"><button type="button">Reestablecer</button></a>
+<h2>Lista de vehículos</h2>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>ID</th>
+        <th>Placa</th>
+        <th>Saldo</th>
+        <th>Acciones</th>
+    </tr>
+    {% for auto in automoviles %}
+    <tr>
+        <td>{{ auto.id }}</td>
+        <td>{{ auto.placa }}</td>
+        <td>{{ auto.saldo }}</td>
+        <td>
+            <a href="{{ url_for('actualizar_automovil', id=auto.id) }}">Actualizar</a> |
+            <form action="{{ url_for('eliminar_automovil', id=auto.id) }}" method="post" style="display:inline;">
+                <button type="submit">Eliminar</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
