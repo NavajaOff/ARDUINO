@@ -55,6 +55,7 @@ def agregar_automovil():
     return render_template('agregar_vehiculo.html', mensaje=mensaje)
 
 @app.route('/automovil/actualizar/<int:id>', methods=['GET', 'POST'])
+@app.route('/automovil/actualizar/<int:id>', methods=['GET', 'POST'])
 def actualizar_automovil(id):
     automovil = Automovil.obtener_por_id(id)
     mensaje = None
@@ -62,19 +63,18 @@ def actualizar_automovil(id):
     if request.method == 'POST':
         placa = request.form['placa']
         saldo = request.form['saldo']
-
-        # Llamas al controlador para actualizar
-        resultado = AutomovilController.actualizar_automovil(id, placa, saldo)
-
+        saldo = float(saldo) if saldo else None
+        resultado = AutomovilController.actualizar_automovil(id, placa=placa, saldo=saldo)
         if resultado is None:
             mensaje = "No se pudo actualizar el vehículo."
         elif "error" in resultado:
             mensaje = resultado["error"]
         else:
             mensaje = "Vehículo actualizado correctamente."
-            automovil = Automovil.obtener_por_id(id)  # refresca datos
-
+            automovil = Automovil.obtener_por_id(id) 
+            return redirect(url_for('listar_automoviles'))
     return render_template('actualizar_vehiculo.html', automovil=automovil, mensaje=mensaje)
+
 
 
 @app.route('/eliminar/<int:id>', methods=['GET', 'POST'])

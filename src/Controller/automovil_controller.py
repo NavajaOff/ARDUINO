@@ -54,7 +54,6 @@ class AutomovilController:
             if not automovil:
                 return {"error": "Vehículo no encontrado."}
 
-            # Validar duplicado
             if placa:
                 existente = Automovil.obtener_por_placa(placa)
                 if existente and existente.id != id:
