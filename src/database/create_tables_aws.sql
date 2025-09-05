@@ -28,3 +28,14 @@ CREATE TABLE IF NOT EXISTS registros_peaje (
     bloque_id INT,
     FOREIGN KEY (bloque_id) REFERENCES blockchain(indice)
 );
+
+CREATE TABLE IF NOT EXISTS `automovil` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `placa` varchar(50) DEFAULT NULL,
+  `saldo` double DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `automovil` (`id`, `placa`, `saldo`) VALUES
+	(8, '56', 70),
+	(13, '12345', 0);
