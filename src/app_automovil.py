@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Flask, render_template, request, redirect, url_for
 from Controller.automovil_controller import AutomovilController
+from src.Model.automovil_model import Automovil
 
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'View', 'Templates')
 app = Flask(__name__, template_folder=template_dir)
@@ -38,22 +39,39 @@ def listar_automoviles():
 
 @app.route('/agregar', methods=['GET', 'POST'])
 def agregar_automovil():
+    mensaje = ""
     if request.method == 'POST':
-        placa = request.form.get('placa')
-        saldo = request.form.get('saldo', 0)
-        AutomovilController.crear_automovil(placa, float(saldo))
-        return redirect(url_for('listar_automoviles'))
-    return render_template('agregar_vehiculo.html')
+        placa = request.form.get('placa').upper().strip() 
+        existe = AutomovilController.obtener_automovil_por_placa(placa)
+        if existe:
+            mensaje = f"La placa {placa} ya está registrada."
+        else:
+            AutomovilController.crear_automovil(placa, 0.0)
+            return redirect(url_for('listar_automoviles'))
+    return render_template('agregar_vehiculo.html', mensaje=mensaje)
 
-@app.route('/actualizar/<int:id>', methods=['GET', 'POST'])
+@app.route('/automovil/actualizar/<int:id>', methods=['GET', 'POST'])
 def actualizar_automovil(id):
-    automovil = AutomovilController.obtener_automovil_por_id(id)
+    automovil = Automovil.obtener_por_id(id)
+    mensaje = None
+
     if request.method == 'POST':
-        placa = request.form.get('placa')
-        saldo = request.form.get('saldo', 0)
-        AutomovilController.actualizar_automovil(id, placa, float(saldo))
-        return redirect(url_for('listar_automoviles'))
-    return render_template('actualizar_vehiculo.html', automovil=automovil)
+        placa = request.form['placa']
+        saldo = request.form['saldo']
+
+        # Llamas al controlador para actualizar
+        resultado = AutomovilController.actualizar_automovil(id, placa, saldo)
+
+        if resultado is None:
+            mensaje = "No se pudo actualizar el vehículo."
+        elif "error" in resultado:
+            mensaje = resultado["error"]
+        else:
+            mensaje = "Vehículo actualizado correctamente."
+            automovil = Automovil.obtener_por_id(id)  # refresca datos
+
+    return render_template('actualizar_vehiculo.html', automovil=automovil, mensaje=mensaje)
+
 
 @app.route('/eliminar/<int:id>', methods=['GET', 'POST'])
 def eliminar_automovil(id):
