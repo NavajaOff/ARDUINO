@@ -15,8 +15,8 @@ def index():
 
 @app.route('/automoviles')
 def listar_automoviles():
-    # Aquí podrías listar todos los automóviles si tienes un método para ello
-    return render_template('automovil.html')
+    automoviles = AutomovilController.obtener_todos()
+    return render_template('automovil.html', automoviles=automoviles)
 
 @app.route('/agregar', methods=['GET', 'POST'])
 def agregar_automovil():

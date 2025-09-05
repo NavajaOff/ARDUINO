@@ -4,20 +4,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD SALDO VEHICULO</title>
+    <title>CRUD SALDO VEHÍCULO</title>
 </head>
 <body>
     <h1>CRUD VEHÍCULOS</h1>
 
     <a href="{{ url_for('agregar_automovil') }}"><button>Agregar vehículo</button></a>
+    <br><br>
 
-    <!-- Para revisar, actualizar y eliminar, normalmente se necesita el id del vehículo -->
-    <!-- Aquí solo se muestra el botón, pero lo ideal es listar los vehículos y poner el id en el enlace -->
-    <a href="{{ url_for('listar_automoviles') }}"><button>Revisar vehículos</button></a>
+    <h2>Lista de vehículos</h2>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>ID</th>
+            <th>Placa</th>
+            <th>Saldo</th>
+            <th>Acciones</th>
+        </tr>
+        {% for auto in automoviles %}
+        <tr>
+            <td>{{ auto.id }}</td>
+            <td>{{ auto.placa }}</td>
+            <td>{{ auto.saldo }}</td>
+            <td>
+                <a href="{{ url_for('actualizar_automovil', id=auto.id) }}">Actualizar</a> |
+                <a href="{{ url_for('eliminar_automovil', id=auto.id) }}">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 
-    <!-- Ejemplo con id=1, deberías generar estos enlaces dinámicamente en una tabla/lista -->
-    <a href="{{ url_for('actualizar_automovil', id=1) }}"><button>Actualizar vehículo</button></a>
-
-    <a href="{{ url_for('eliminar_automovil', id=1) }}"><button>Eliminar vehículo</button></a>
 </body>
 </html>

@@ -78,3 +78,12 @@ class AutomovilController:
         except Exception as e:
             print(f"Error en el controlador al eliminar automovil: {e}")
             return False
+
+    @staticmethod
+    def obtener_todos():
+        try:
+            automoviles = Automovil.obtener_todos()
+            return automoviles
+        except Exception as e:
+            print(f"Error en el controlador al obtener todos los automóviles: {e}")
+            return []
